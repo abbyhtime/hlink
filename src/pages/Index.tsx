@@ -1,11 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import Header from '@/components/Header';
+import StatsCard from '@/components/StatsCard';
+import AddContactForm from '@/components/AddContactForm';
+import RecentContacts from '@/components/RecentContacts';
+import QuickActions from '@/components/QuickActions';
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-charcoal">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(71,158,125,0.1),transparent_70%)]" />
+      
+      <div className="relative z-10 max-w-md mx-auto">
+        <Header />
+        <StatsCard />
+        <AddContactForm />
+        <QuickActions />
+        <RecentContacts />
+        
+        {/* Bottom padding for mobile scroll */}
+        <div className="h-20" />
       </div>
     </div>
   );
