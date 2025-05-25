@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
-import { QrCode, Users, Clock } from 'lucide-react';
+import { QrCode, Users, Clock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const QRDisplay = () => {
+  const navigate = useNavigate();
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionCode] = useState('HTM-2024-001');
 
@@ -15,6 +17,10 @@ const QRDisplay = () => {
   const endSession = () => {
     setSessionActive(false);
     console.log('Ending QR session');
+  };
+
+  const viewLiveSession = () => {
+    navigate('/live-session');
   };
 
   return (
@@ -53,23 +59,34 @@ const QRDisplay = () => {
           <span>Scan to join networking session</span>
         </div>
 
-        {!sessionActive ? (
-          <Button 
-            onClick={startSession}
-            className="w-full glass-button"
-          >
-            Start QR Session
-          </Button>
-        ) : (
-          <Button 
-            onClick={endSession}
-            className="w-full bg-red-600/90 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl 
-                       shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
-                       backdrop-blur-sm border border-red-600/30"
-          >
-            End QR Session
-          </Button>
-        )}
+        <div className="space-y-3">
+          {!sessionActive ? (
+            <Button 
+              onClick={startSession}
+              className="w-full glass-button"
+            >
+              Start QR Session
+            </Button>
+          ) : (
+            <>
+              <Button 
+                onClick={viewLiveSession}
+                className="w-full glass-button mb-3"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View Live Session
+              </Button>
+              <Button 
+                onClick={endSession}
+                className="w-full bg-red-600/90 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-xl 
+                           shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
+                           backdrop-blur-sm border border-red-600/30"
+              >
+                End QR Session
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
