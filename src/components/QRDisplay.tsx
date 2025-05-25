@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QrCode, Users, Clock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -9,13 +9,23 @@ const QRDisplay = () => {
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionCode] = useState('HTM-2024-001');
 
+  // Check session state on component mount
+  useEffect(() => {
+    const isActive = localStorage.getItem('qr-session-active') === 'true';
+    setSessionActive(isActive);
+  }, []);
+
   const startSession = () => {
     setSessionActive(true);
+    localStorage.setItem('qr-session-active', 'true');
+    localStorage.setItem('qr-session-started', 'true');
     console.log('Starting QR session:', sessionCode);
   };
 
   const endSession = () => {
     setSessionActive(false);
+    localStorage.removeItem('qr-session-active');
+    localStorage.removeItem('qr-session-started');
     console.log('Ending QR session');
   };
 

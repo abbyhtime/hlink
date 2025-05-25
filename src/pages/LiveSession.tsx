@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Users, Wifi, X } from 'lucide-react';
+import { Users, Wifi, X, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,10 +16,24 @@ const LiveSession = () => {
   const navigate = useNavigate();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [sessionCode] = useState('HTM-2024-001');
-  const [isActive, setIsActive] = useState(true);
+  const [isActive, setIsActive] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
+
+  // Check if session was started from localStorage
+  useEffect(() => {
+    const sessionActive = localStorage.getItem('qr-session-active') === 'true';
+    const sessionWasStarted = localStorage.getItem('qr-session-started') === 'true';
+    
+    setIsActive(sessionActive);
+    setSessionStarted(sessionWasStarted);
+    
+    console.log('Session active:', sessionActive, 'Session started:', sessionWasStarted);
+  }, []);
 
   // Simulate participants joining (in real app, this would be real-time data)
   useEffect(() => {
+    if (!isActive || !sessionStarted) return;
+
     const mockParticipants = [
       { id: '1', name: 'Sarah Chen', email: 's.chen@techcorp.com', company: 'TechCorp', joinedAt: new Date() },
       { id: '2', name: 'Michael Rodriguez', email: 'm.rodriguez@startup.io', company: 'StartupIO', joinedAt: new Date() },
@@ -35,13 +49,76 @@ const LiveSession = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, sessionStarted]);
 
   const endSession = () => {
     setIsActive(false);
+    setSessionStarted(false);
+    localStorage.removeItem('qr-session-active');
+    localStorage.removeItem('qr-session-started');
+    setParticipants([]);
     console.log('Ending live session');
     navigate('/');
   };
+
+  const startSession = () => {
+    setIsActive(true);
+    setSessionStarted(true);
+    localStorage.setItem('qr-session-active', 'true');
+    localStorage.setItem('qr-session-started', 'true');
+    console.log('Starting live session');
+  };
+
+  // Show "No Session Initiated" state if no session has been started
+  if (!sessionStarted) {
+    return (
+      <div className="min-h-screen bg-charcoal">
+        {/* Background pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(71,158,125,0.1),transparent_70%)]" />
+        
+        <div className="relative z-10 max-w-2xl mx-auto p-6">
+          <div className="text-center pt-20">
+            <div className="flex items-center justify-center space-x-3 mb-8">
+              <div className="p-4 rounded-xl bg-lightGray/10">
+                <QrCode className="w-8 h-8 text-lightGray/50" />
+              </div>
+              <h1 className="text-3xl font-bold text-lightGray/70">HTIME Live</h1>
+            </div>
+            
+            <div className="glass-card p-8 mb-8">
+              <div className="w-16 h-16 rounded-full bg-lightGray/10 flex items-center justify-center mx-auto mb-6">
+                <Wifi className="w-8 h-8 text-lightGray/30" />
+              </div>
+              
+              <h2 className="text-xl font-semibold text-lightGray/70 mb-4">No Live Session Initiated</h2>
+              <p className="text-lightGray/50 mb-6">
+                Start a QR session from the main page to begin connecting with participants.
+              </p>
+              
+              <div className="space-y-3">
+                <Button 
+                  onClick={startSession}
+                  className="w-full glass-button text-lg py-4"
+                >
+                  <QrCode className="w-5 h-5 mr-2" />
+                  Start QR Session
+                </Button>
+                
+                <Button 
+                  onClick={() => navigate('/')}
+                  className="w-full bg-lightGray/10 hover:bg-lightGray/20 text-lightGray/70 font-semibold px-6 py-3 rounded-xl 
+                             shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
+                             backdrop-blur-sm border border-lightGray/20"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-charcoal">
