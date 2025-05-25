@@ -5,7 +5,7 @@ const Header = () => {
   return (
     <div className="flex items-center justify-between p-6 pt-12">
       <div>
-        <h1 className="text-2xl font-bold text-lightGray">NetworkPro</h1>
+        <h1 className="text-2xl font-bold text-lightGray">HTIME</h1>
         <p className="text-lightGray/70 text-sm">Grow your connections</p>
       </div>
       <div className="flex items-center space-x-3">

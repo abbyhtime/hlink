@@ -1,8 +1,6 @@
 
 import Header from '@/components/Header';
-import StatsCard from '@/components/StatsCard';
-import AddContactForm from '@/components/AddContactForm';
-import RecentContacts from '@/components/RecentContacts';
+import ContactForm from '@/components/ContactForm';
 import QuickActions from '@/components/QuickActions';
 
 const Index = () => {
@@ -13,10 +11,8 @@ const Index = () => {
       
       <div className="relative z-10 max-w-md mx-auto">
         <Header />
-        <StatsCard />
-        <AddContactForm />
+        <ContactForm />
         <QuickActions />
-        <RecentContacts />
         
         {/* Bottom padding for mobile scroll */}
         <div className="h-20" />

@@ -1,14 +1,8 @@
 
-import { QrCode, UserPlus, Upload, Zap } from 'lucide-react';
+import { UserPlus, Linkedin, Zap, Nfc } from 'lucide-react';
 
 const QuickActions = () => {
   const actions = [
-    {
-      icon: QrCode,
-      title: "QR Scan",
-      subtitle: "Quick connect",
-      color: "from-mintGreen to-mintGreen/70"
-    },
     {
       icon: UserPlus,
       title: "Invite",
@@ -16,9 +10,15 @@ const QuickActions = () => {
       color: "from-blue-500 to-blue-600"
     },
     {
-      icon: Upload,
-      title: "Import",
-      subtitle: "CSV upload",
+      icon: Linkedin,
+      title: "LinkedIn",
+      subtitle: "Connect",
+      color: "from-blue-600 to-blue-700"
+    },
+    {
+      icon: Nfc,
+      title: "NFC",
+      subtitle: "Tap & add",
       color: "from-purple-500 to-purple-600"
     },
     {
