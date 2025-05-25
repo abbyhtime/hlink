@@ -9,6 +9,8 @@ interface Participant {
   name: string;
   email: string;
   company: string;
+  phone?: string;
+  linkedinUrl?: string;
   joinedAt: Date;
 }
 
@@ -30,32 +32,33 @@ const LiveSession = () => {
     console.log('Session active:', sessionActive, 'Session started:', sessionWasStarted);
   }, []);
 
-  // Simulate participants joining (in real app, this would be real-time data)
+  // Load participants from localStorage and update in real-time
   useEffect(() => {
-    if (!isActive || !sessionStarted) return;
+    if (!sessionStarted) return;
 
-    const mockParticipants = [
-      { id: '1', name: 'Sarah Chen', email: 's.chen@techcorp.com', company: 'TechCorp', joinedAt: new Date() },
-      { id: '2', name: 'Michael Rodriguez', email: 'm.rodriguez@startup.io', company: 'StartupIO', joinedAt: new Date() },
-    ];
+    const loadParticipants = () => {
+      const storedParticipants = JSON.parse(localStorage.getItem('session-participants') || '[]');
+      setParticipants(storedParticipants.map((p: any) => ({
+        ...p,
+        joinedAt: new Date(p.joinedAt)
+      })));
+    };
 
-    // Simulate real-time joining
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < mockParticipants.length && isActive) {
-        setParticipants(prev => [...prev, mockParticipants[index]]);
-        index++;
-      }
-    }, 3000);
+    // Initial load
+    loadParticipants();
+
+    // Set up interval to check for updates
+    const interval = setInterval(loadParticipants, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive, sessionStarted]);
+  }, [sessionStarted]);
 
   const endSession = () => {
     setIsActive(false);
     setSessionStarted(false);
     localStorage.removeItem('qr-session-active');
     localStorage.removeItem('qr-session-started');
+    localStorage.removeItem('session-participants');
     setParticipants([]);
     console.log('Ending live session');
     navigate('/');
@@ -166,7 +169,7 @@ const LiveSession = () => {
             </div>
           ) : (
             participants
-              .filter(participant => participant && participant.name) // Add safety filter
+              .filter(participant => participant && participant.name)
               .map((participant, index) => (
                 <div 
                   key={participant.id}
@@ -181,6 +184,9 @@ const LiveSession = () => {
                       <h3 className="font-semibold text-lightGray text-lg">{participant.name}</h3>
                       <p className="text-mintGreen text-sm">{participant.company}</p>
                       <p className="text-lightGray/50 text-xs">{participant.email}</p>
+                      {participant.phone && (
+                        <p className="text-lightGray/50 text-xs">{participant.phone}</p>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
@@ -192,26 +198,30 @@ const LiveSession = () => {
           )}
         </div>
 
-        {/* End Session Button */}
-        {isActive && (
-          <Button 
-            onClick={endSession}
-            className="w-full bg-red-600/90 hover:bg-red-600 text-white font-semibold px-6 py-4 rounded-xl 
-                       shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
-                       backdrop-blur-sm border border-red-600/30 text-lg"
-          >
-            <X className="w-5 h-5 mr-2" />
-            End Session
-          </Button>
-        )}
-        
-        {!isActive && (
-          <Button 
-            onClick={() => navigate('/')}
-            className="w-full glass-button text-lg py-4"
-          >
-            Back to Home
-          </Button>
+        {/* Control Buttons - Only show if this is the host view */}
+        {window.location.pathname === '/live-session' && (
+          <>
+            {isActive && (
+              <Button 
+                onClick={endSession}
+                className="w-full bg-red-600/90 hover:bg-red-600 text-white font-semibold px-6 py-4 rounded-xl 
+                           shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
+                           backdrop-blur-sm border border-red-600/30 text-lg"
+              >
+                <X className="w-5 h-5 mr-2" />
+                End Session
+              </Button>
+            )}
+            
+            {!isActive && (
+              <Button 
+                onClick={() => navigate('/')}
+                className="w-full glass-button text-lg py-4"
+              >
+                Back to Home
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>
