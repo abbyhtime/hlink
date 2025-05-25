@@ -88,28 +88,30 @@ const LiveSession = () => {
               <p className="text-lightGray/50 text-sm mt-2">Share the QR code for people to scan</p>
             </div>
           ) : (
-            participants.map((participant, index) => (
-              <div 
-                key={participant.id}
-                className="glass-card p-4 animate-fade-in"
-                style={{ animationDelay: `${index * 200}ms` }}
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-mintGreen to-mintGreen/70 flex items-center justify-center text-white font-bold text-lg">
-                    {participant.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lightGray text-lg">{participant.name}</h3>
-                    <p className="text-mintGreen text-sm">{participant.company}</p>
-                    <p className="text-lightGray/50 text-xs">{participant.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
-                    <span className="text-xs text-lightGray/50">Online</span>
+            participants
+              .filter(participant => participant && participant.name) // Add safety filter
+              .map((participant, index) => (
+                <div 
+                  key={participant.id}
+                  className="glass-card p-4 animate-fade-in"
+                  style={{ animationDelay: `${index * 200}ms` }}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-mintGreen to-mintGreen/70 flex items-center justify-center text-white font-bold text-lg">
+                      {participant.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lightGray text-lg">{participant.name}</h3>
+                      <p className="text-mintGreen text-sm">{participant.company}</p>
+                      <p className="text-lightGray/50 text-xs">{participant.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
+                      <span className="text-xs text-lightGray/50">Online</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))
           )}
         </div>
 
