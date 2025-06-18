@@ -100,4 +100,14 @@
            shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
            backdrop-blur-sm border border-mintGreen/30;
   }
+  
+  .animate-shake {
+    animation: shake 0.3s ease-in-out;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
 }
