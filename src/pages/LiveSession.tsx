@@ -14,6 +14,8 @@ interface Participant {
   phone?: string;
   linkedinUrl?: string;
   joinedAt: Date;
+  isHTimeUser?: boolean;
+  inviteSentAt?: Date;
 }
 
 // Privacy protection utility functions
@@ -65,10 +67,22 @@ const LiveSession = () => {
 
     const loadParticipants = () => {
       const storedParticipants = JSON.parse(localStorage.getItem('session-participants') || '[]');
-      setParticipants(storedParticipants.map((p: any) => ({
-        ...p,
-        joinedAt: new Date(p.joinedAt)
-      })));
+      const processedParticipants = storedParticipants.map((p: any) => {
+        const participant = {
+          ...p,
+          joinedAt: new Date(p.joinedAt)
+        };
+        
+        // Demo logic: Randomly assign hTime user status if not already set
+        if (participant.isHTimeUser === undefined) {
+          // 20% are existing hTime users, 80% are not
+          participant.isHTimeUser = Math.random() < 0.2;
+        }
+        
+        return participant;
+      });
+      
+      setParticipants(processedParticipants);
     };
 
     // Initial load
@@ -79,6 +93,37 @@ const LiveSession = () => {
 
     return () => clearInterval(interval);
   }, [sessionStarted]);
+
+  // Demo simulation: Convert non-hTime users to hTime users over time
+  useEffect(() => {
+    if (participants.length === 0) return;
+
+    const simulateInviteAcceptance = () => {
+      setParticipants(prevParticipants => {
+        return prevParticipants.map(participant => {
+          // Only process non-hTime users who haven't been sent an invite yet
+          if (!participant.isHTimeUser && !participant.inviteSentAt) {
+            // Random chance they "accept" the invite (simulate real-world acceptance)
+            const timeSinceJoined = Date.now() - participant.joinedAt.getTime();
+            const shouldAccept = Math.random() < 0.3 && timeSinceJoined > 5000; // 30% chance after 5 seconds
+            
+            if (shouldAccept) {
+              return {
+                ...participant,
+                isHTimeUser: true,
+                inviteSentAt: new Date()
+              };
+            }
+          }
+          return participant;
+        });
+      });
+    };
+
+    // Run simulation every 3 seconds
+    const simulationInterval = setInterval(simulateInviteAcceptance, 3000);
+    return () => clearInterval(simulationInterval);
+  }, [participants.length]);
 
   const endSession = () => {
     setIsActive(false);
@@ -101,6 +146,9 @@ const LiveSession = () => {
 
   // Action handlers for participant interactions
   const handleAddContact = (participant: Participant) => {
+    // Only allow if user is an hTime user
+    if (!participant.isHTimeUser) return;
+    
     console.log('Adding contact:', participant.name);
     
     // Update button state to disabled
@@ -117,6 +165,9 @@ const LiveSession = () => {
   };
 
   const handleInviteToHTime = (participant: Participant) => {
+    // Only allow if user is NOT an hTime user
+    if (participant.isHTimeUser) return;
+    
     console.log('Inviting to hTime:', participant.name);
     
     // Update button state to disabled
@@ -124,6 +175,15 @@ const LiveSession = () => {
       ...prev,
       [participant.id]: { ...prev[participant.id], invite: true }
     }));
+    
+    // Mark invite as sent
+    setParticipants(prevParticipants => 
+      prevParticipants.map(p => 
+        p.id === participant.id 
+          ? { ...p, inviteSentAt: new Date() }
+          : p
+      )
+    );
     
     // Show toast notification
     toast({
@@ -276,12 +336,14 @@ const LiveSession = () => {
                         <div className="grid grid-cols-2 gap-3 mt-4">
                           <Button
                             onClick={() => handleAddContact(participant)}
-                            disabled={participantButtonState.addContact}
-                            className="bg-mintGreen hover:bg-mintGreen/90 disabled:bg-mintGreen/30 
-                                     text-white disabled:text-white/60 border-0 font-medium 
-                                     px-4 py-3 h-auto rounded-lg text-sm
-                                     transition-all duration-200 transform hover:scale-105 active:scale-95
-                                     shadow-lg hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed"
+                            disabled={!participant.isHTimeUser || participantButtonState.addContact}
+                            className={`${
+                              participant.isHTimeUser 
+                                ? 'bg-mintGreen hover:bg-mintGreen/90 disabled:bg-mintGreen/30 text-white disabled:text-white/60' 
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            } border-0 font-medium px-4 py-3 h-auto rounded-lg text-sm
+                               transition-all duration-200 transform hover:scale-105 active:scale-95
+                               shadow-lg hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed`}
                           >
                             <UserPlus className="w-4 h-4 mr-2" />
                             {participantButtonState.addContact ? 'Request Sent' : 'Add Contact'}
@@ -289,15 +351,17 @@ const LiveSession = () => {
                           
                           <Button
                             onClick={() => handleInviteToHTime(participant)}
-                            disabled={participantButtonState.invite}
-                            className="bg-white hover:bg-gray-50 disabled:bg-gray-100 
-                                     text-gray-800 disabled:text-gray-400 border border-gray-200 disabled:border-gray-200
-                                     font-medium px-4 py-3 h-auto rounded-lg text-sm
-                                     transition-all duration-200 transform hover:scale-105 active:scale-95
-                                     shadow-lg hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed"
+                            disabled={participant.isHTimeUser || participantButtonState.invite || !!participant.inviteSentAt}
+                            className={`${
+                              !participant.isHTimeUser && !participant.inviteSentAt
+                                ? 'bg-white hover:bg-gray-50 disabled:bg-gray-100 text-gray-800 disabled:text-gray-400 border border-gray-200 disabled:border-gray-200'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
+                            } font-medium px-4 py-3 h-auto rounded-lg text-sm
+                               transition-all duration-200 transform hover:scale-105 active:scale-95
+                               shadow-lg hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed`}
                           >
                             <Send className="w-4 h-4 mr-2" />
-                            {participantButtonState.invite ? 'Invited' : 'Invite to hTime'}
+                            {participant.inviteSentAt || participantButtonState.invite ? 'Invited' : 'Invite to hTime'}
                           </Button>
                         </div>
                       </div>
