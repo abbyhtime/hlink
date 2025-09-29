@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Users, Wifi, X, QrCode, UserPlus, Send } from 'lucide-react';
+import { Users, Wifi, X, QrCode, UserPlus, Send, EyeOff, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,21 +20,21 @@ interface Participant {
 }
 
 // Privacy protection utility functions
-const protectPrivateInfo = (participant: Participant, isAdminView: boolean) => {
-  if (isAdminView) {
-    return participant; // Show all details for admin
+const protectPrivateInfo = (participant: Participant, isAdminView: boolean, privacyMode: boolean) => {
+  if (isAdminView && !privacyMode) {
+    return participant; // Show all details for admin when privacy mode is off
   }
   
-  // User view - protect sensitive information
+  // Privacy mode enabled - protect all sensitive information except first name
   const nameParts = participant.name.split(' ');
   const firstName = nameParts[0];
-  const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] + '.' : '';
   
   return {
     ...participant,
-    name: `${firstName} ${lastInitial}`,
+    name: firstName, // Only show first name
     email: '••••••@••••.com',
-    phone: participant.phone ? '•••-•••-••••' : undefined
+    phone: participant.phone ? '•••-•••-••••' : undefined,
+    company: '••••••••'
   };
 };
 
@@ -46,6 +47,7 @@ const LiveSession = () => {
   const [isActive, setIsActive] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [buttonStates, setButtonStates] = useState<{[key: string]: {addContact: boolean, invite: boolean}}>({});
+  const [privacyMode, setPrivacyMode] = useState(false);
 
   // Determine if this is admin view (default) or user view
   const isAdminView = searchParams.get('view') !== 'user';
@@ -258,7 +260,7 @@ const LiveSession = () => {
       <div className="relative z-10 max-w-2xl mx-auto p-6">
         {/* Header */}
         <div className="text-center mb-8 pt-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="p-3 rounded-xl bg-mintGreen/20">
               <Wifi className="w-6 h-6 text-mintGreen" />
             </div>
@@ -268,6 +270,20 @@ const LiveSession = () => {
                 User View
               </Badge>
             )}
+          </div>
+          
+          {/* Privacy Toggle */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Eye className={`w-4 h-4 ${!privacyMode ? 'text-mintGreen' : 'text-lightGray/50'}`} />
+            <Switch
+              checked={privacyMode}
+              onCheckedChange={setPrivacyMode}
+              className="data-[state=checked]:bg-mintGreen"
+            />
+            <EyeOff className={`w-4 h-4 ${privacyMode ? 'text-mintGreen' : 'text-lightGray/50'}`} />
+            <span className="text-sm text-lightGray/70">
+              {privacyMode ? 'Privacy Mode On' : 'Full Details'}
+            </span>
           </div>
           
           <div className="glass-card p-4 mb-6">
@@ -303,7 +319,7 @@ const LiveSession = () => {
             participants
               .filter(participant => participant && participant.name)
               .map((participant, index) => {
-                const displayParticipant = protectPrivateInfo(participant, isAdminView);
+                const displayParticipant = protectPrivateInfo(participant, isAdminView, privacyMode);
                 const participantButtonState = buttonStates[participant.id] || { addContact: false, invite: false };
                 
                 return (

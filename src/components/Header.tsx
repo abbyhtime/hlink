@@ -1,7 +1,10 @@
 
-import { Plus, Settings } from 'lucide-react';
+import { Bot, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex items-center justify-between p-6 pt-12">
       <div>
@@ -9,8 +12,11 @@ const Header = () => {
         <p className="text-lightGray/70 text-sm">Grow your connections</p>
       </div>
       <div className="flex items-center space-x-3">
-        <button className="p-3 rounded-xl bg-lightGray/10 backdrop-blur-sm border border-lightGray/20 hover:bg-lightGray/20 transition-all duration-200">
-          <Plus className="w-5 h-5 text-mintGreen" />
+        <button 
+          onClick={() => navigate('/assistant')}
+          className="p-3 rounded-xl bg-lightGray/10 backdrop-blur-sm border border-lightGray/20 hover:bg-lightGray/20 transition-all duration-200"
+        >
+          <Bot className="w-5 h-5 text-mintGreen" />
         </button>
         <button className="p-3 rounded-xl bg-lightGray/10 backdrop-blur-sm border border-lightGray/20 hover:bg-lightGray/20 transition-all duration-200">
           <Settings className="w-5 h-5 text-lightGray" />

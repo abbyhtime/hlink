@@ -19,26 +19,6 @@ const Index = () => {
         <ContactForm />
         <QuickActions />
         
-        {/* New Feature Links */}
-        <div className="px-6 mt-6 space-y-3">
-          <Button
-            onClick={() => navigate('/assistant')}
-            variant="outline"
-            className="w-full bg-lightGray/5 border-lightGray/20 text-lightGray hover:bg-lightGray/10 hover:border-mintGreen/50"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            AI Scheduling Assistant
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/contacts')}
-            variant="outline"
-            className="w-full bg-lightGray/5 border-lightGray/20 text-lightGray hover:bg-lightGray/10 hover:border-mintGreen/50"
-          >
-            <Shield className="w-4 h-4 mr-2" />
-            Contact Privacy Demo
-          </Button>
-        </div>
         
         {/* Bottom padding for mobile scroll */}
         <div className="h-20" />

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, MessageCircle, Calendar, Clock } from 'lucide-react';
+import { Send, MessageCircle, Calendar, Clock, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -13,10 +14,11 @@ interface Message {
 }
 
 const Assistant = () => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hi! I'm your scheduling assistant. I can help you find the perfect time to meet with your contact. Just tell me what you need!",
+      content: "Hi! I'm your Executive Assistant. I help busy professionals like you schedule meetings efficiently. What meeting would you like to schedule today?",
       sender: 'assistant',
       timestamp: new Date(),
     }
@@ -25,15 +27,47 @@ const Assistant = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const mockResponses = [
-    "I'd be happy to help you schedule that meeting! What days work best for you?",
-    "Let me check the available time slots... I see Tuesday at 2 PM and Thursday at 10 AM are open. Which would you prefer?",
-    "Perfect! I'll send the invite for Tuesday at 2 PM. You'll receive a confirmation shortly.",
-    "I've found 3 available slots this week: Monday 3 PM, Wednesday 11 AM, and Friday 2 PM. Which works for you?",
-    "Great choice! The meeting is now scheduled. I'll send calendar invites to both parties.",
-    "I can help with that! Are you looking for a quick 15-minute call or a longer meeting?",
-    "Based on your contact's preferences, I'd recommend either morning slots (9-11 AM) or late afternoon (4-6 PM). What's your preference?"
-  ];
+  const getSmartResponse = (userMessage: string) => {
+    const message = userMessage.toLowerCase();
+    
+    // Check if user provided complete info (context + duration + time)
+    if ((message.includes('meet') || message.includes('call') || message.includes('discussion')) &&
+        (message.includes('30 min') || message.includes('hour') || message.includes('quick')) &&
+        (message.includes('tuesday') || message.includes('tomorrow') || message.includes('next week'))) {
+      return "Perfect! I have all the details I need. Let me check your calendar... I found 3 great time slots:\n\n📅 Tuesday 2:00 PM - 2:30 PM\n📅 Tuesday 4:00 PM - 4:30 PM\n📅 Wednesday 10:00 AM - 10:30 AM\n\nWhich works best for you?";
+    }
+    
+    // Context-related responses
+    if (message.includes('project') || message.includes('discuss') || message.includes('review')) {
+      return "Great! I understand this is about project discussion. How long do you anticipate this meeting will last? And do you have any specific time preferences?";
+    }
+    
+    // Duration-related responses
+    if (message.includes('30 min') || message.includes('quick') || message.includes('brief')) {
+      return "Perfect, a 30-minute meeting. What's the main purpose of this meeting? Also, do you have any preferred days or times?";
+    }
+    
+    // Time-related responses
+    if (message.includes('tomorrow') || message.includes('next week') || message.includes('tuesday')) {
+      return "Good timing preference! What's the context for this meeting, and how long should it be?";
+    }
+    
+    // General availability queries
+    if (message.includes('free') || message.includes('available') || message.includes('this week')) {
+      return "Looking at your calendar, you have good availability this week. Tuesday afternoon, Wednesday morning, and Friday are relatively open. What type of meeting are you looking to schedule?";
+    }
+    
+    // Default responses with personality
+    const responses = [
+      "I'd be happy to help schedule that! To find the perfect time, I'll need to know: What's the meeting about? How long should it be? Any time preferences?",
+      "Absolutely! Let me gather some details. What's the purpose of this meeting and how long do you expect it to last?",
+      "Great! I'll help you find the ideal time slot. Could you tell me more about the meeting context and your preferred timing?",
+      "Perfect timing to reach out! What's the meeting regarding, and do you have a duration in mind?",
+      "I'm on it! To suggest the best options, I need to know the meeting purpose, duration, and any time preferences you have."
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,17 +93,17 @@ const Assistant = () => {
 
     // Simulate AI thinking time
     setTimeout(() => {
-      const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+      const smartResponse = getSmartResponse(inputValue);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: randomResponse,
+        content: smartResponse,
         sender: 'assistant',
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
       setIsTyping(false);
-    }, 1500 + Math.random() * 2000);
+    }, 1500 + Math.random() * 1000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -85,12 +119,20 @@ const Assistant = () => {
       <div className="bg-charcoal/95 backdrop-blur-sm border-b border-lightGray/10 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
+            <Button
+              onClick={() => navigate('/')}
+              variant="ghost"
+              size="icon"
+              className="text-lightGray hover:text-mintGreen hover:bg-lightGray/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <div className="p-2 bg-mintGreen/20 rounded-lg">
               <MessageCircle className="w-6 h-6 text-mintGreen" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-lightGray">AI Scheduling Assistant</h1>
-              <p className="text-sm text-lightGray/70">Help schedule meetings without bothering your contacts</p>
+              <h1 className="text-xl font-semibold text-lightGray">Executive Assistant</h1>
+              <p className="text-sm text-lightGray/70">Your AI scheduling assistant</p>
             </div>
           </div>
         </div>
