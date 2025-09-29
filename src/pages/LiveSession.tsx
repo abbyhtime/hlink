@@ -1,8 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { Users, Wifi, X, QrCode, UserPlus, Send, Calendar, Linkedin } from 'lucide-react';
+import { Users, Wifi, X, QrCode, UserPlus, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface Participant {
   id: string;
@@ -14,12 +16,37 @@ interface Participant {
   joinedAt: Date;
 }
 
+// Privacy protection utility functions
+const protectPrivateInfo = (participant: Participant, isAdminView: boolean) => {
+  if (isAdminView) {
+    return participant; // Show all details for admin
+  }
+  
+  // User view - protect sensitive information
+  const nameParts = participant.name.split(' ');
+  const firstName = nameParts[0];
+  const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1][0] + '.' : '';
+  
+  return {
+    ...participant,
+    name: `${firstName} ${lastInitial}`,
+    email: '••••••@••••.com',
+    phone: participant.phone ? '•••-•••-••••' : undefined
+  };
+};
+
 const LiveSession = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [sessionCode] = useState('HTM-2024-001');
   const [isActive, setIsActive] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
+  const [buttonStates, setButtonStates] = useState<{[key: string]: {addContact: boolean, invite: boolean}}>({});
+
+  // Determine if this is admin view (default) or user view
+  const isAdminView = searchParams.get('view') !== 'user';
 
   // Check if session was started from localStorage
   useEffect(() => {
@@ -75,23 +102,34 @@ const LiveSession = () => {
   // Action handlers for participant interactions
   const handleAddContact = (participant: Participant) => {
     console.log('Adding contact:', participant.name);
-    // This will require Supabase integration for backend logic
+    
+    // Update button state to disabled
+    setButtonStates(prev => ({
+      ...prev,
+      [participant.id]: { ...prev[participant.id], addContact: true }
+    }));
+    
+    // Show toast notification
+    toast({
+      title: "Request sent",
+      description: `Contact request sent to ${participant.name.split(' ')[0]}`,
+    });
   };
 
   const handleInviteToHTime = (participant: Participant) => {
     console.log('Inviting to hTime:', participant.name);
-    // This will require Supabase integration for user detection and invitations
-  };
-
-  const handleScheduleMeeting = (participant: Participant) => {
-    console.log('Scheduling meeting with:', participant.name);
-    // This will require integration with calendar/scheduling system
-  };
-
-  const handleLinkedInConnect = (participant: Participant) => {
-    if (participant.linkedinUrl) {
-      window.open(participant.linkedinUrl, '_blank');
-    }
+    
+    // Update button state to disabled
+    setButtonStates(prev => ({
+      ...prev,
+      [participant.id]: { ...prev[participant.id], invite: true }
+    }));
+    
+    // Show toast notification
+    toast({
+      title: "Invitation sent",
+      description: `hTime invitation sent to ${participant.name.split(' ')[0]}`,
+    });
   };
 
   // Show "No Session Initiated" state if no session has been started
@@ -108,6 +146,11 @@ const LiveSession = () => {
                 <QrCode className="w-8 h-8 text-lightGray/50" />
               </div>
               <h1 className="text-3xl font-bold text-lightGray/70">HTIME Live</h1>
+              {!isAdminView && (
+                <Badge variant="secondary" className="ml-2 bg-blue-500/20 text-blue-400 border-blue-500/30">
+                  User View
+                </Badge>
+              )}
             </div>
             
             <div className="glass-card p-8 mb-8">
@@ -121,13 +164,15 @@ const LiveSession = () => {
               </p>
               
               <div className="space-y-3">
-                <Button 
-                  onClick={startSession}
-                  className="w-full glass-button text-lg py-4"
-                >
-                  <QrCode className="w-5 h-5 mr-2" />
-                  Start QR Session
-                </Button>
+                {isAdminView && (
+                  <Button 
+                    onClick={startSession}
+                    className="w-full glass-button text-lg py-4"
+                  >
+                    <QrCode className="w-5 h-5 mr-2" />
+                    Start QR Session
+                  </Button>
+                )}
                 
                 <Button 
                   onClick={() => navigate('/')}
@@ -158,6 +203,11 @@ const LiveSession = () => {
               <Wifi className="w-6 h-6 text-mintGreen" />
             </div>
             <h1 className="text-3xl font-bold text-lightGray">HTIME Live</h1>
+            {!isAdminView && (
+              <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                User View
+              </Badge>
+            )}
           </div>
           
           <div className="glass-card p-4 mb-6">
@@ -192,88 +242,74 @@ const LiveSession = () => {
           ) : (
             participants
               .filter(participant => participant && participant.name)
-              .map((participant, index) => (
-                <div 
-                  key={participant.id}
-                  className="glass-card p-5 animate-fade-in"
-                  style={{ animationDelay: `${index * 200}ms` }}
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-mintGreen to-mintGreen/70 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                      {participant.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lightGray text-lg">{participant.name}</h3>
-                          <p className="text-mintGreen text-sm">{participant.company}</p>
-                          <p className="text-lightGray/50 text-xs">{participant.email}</p>
-                          {participant.phone && (
-                            <p className="text-lightGray/50 text-xs">{participant.phone}</p>
-                          )}
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
-                          <span className="text-xs text-lightGray/50">Online</span>
-                        </div>
+              .map((participant, index) => {
+                const displayParticipant = protectPrivateInfo(participant, isAdminView);
+                const participantButtonState = buttonStates[participant.id] || { addContact: false, invite: false };
+                
+                return (
+                  <div 
+                    key={participant.id}
+                    className="glass-card p-5 animate-fade-in"
+                    style={{ animationDelay: `${index * 200}ms` }}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-mintGreen to-mintGreen/70 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                        {displayParticipant.name.split(' ').map(n => n[0]).join('')}
                       </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        <Button
-                          onClick={() => handleAddContact(participant)}
-                          size="sm"
-                          className="bg-mintGreen/20 hover:bg-mintGreen/30 text-mintGreen border border-mintGreen/30 
-                                   hover:border-mintGreen/50 text-xs px-3 py-1.5 h-auto font-medium"
-                        >
-                          <UserPlus className="w-3 h-3 mr-1.5" />
-                          Add Contact
-                        </Button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h3 className="font-semibold text-lightGray text-lg">{displayParticipant.name}</h3>
+                            <p className="text-mintGreen text-sm">{displayParticipant.company}</p>
+                            <p className="text-lightGray/50 text-xs">{displayParticipant.email}</p>
+                            {displayParticipant.phone && (
+                              <p className="text-lightGray/50 text-xs">{displayParticipant.phone}</p>
+                            )}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
+                            <span className="text-xs text-lightGray/50">Online</span>
+                          </div>
+                        </div>
                         
-                        <Button
-                          onClick={() => handleInviteToHTime(participant)}
-                          size="sm"
-                          variant="outline"
-                          className="text-lightGray/70 border-lightGray/30 hover:bg-lightGray/10 
-                                   hover:text-lightGray text-xs px-3 py-1.5 h-auto font-medium"
-                        >
-                          <Send className="w-3 h-3 mr-1.5" />
-                          Invite to hTime
-                        </Button>
-                        
-                        <Button
-                          onClick={() => handleScheduleMeeting(participant)}
-                          size="sm"
-                          variant="outline"
-                          className="text-lightGray/70 border-lightGray/30 hover:bg-lightGray/10 
-                                   hover:text-lightGray text-xs px-3 py-1.5 h-auto font-medium"
-                        >
-                          <Calendar className="w-3 h-3 mr-1.5" />
-                          Schedule
-                        </Button>
-                        
-                        {participant.linkedinUrl && (
+                        {/* Enhanced Action Buttons - 2x1 Mobile-Friendly Grid */}
+                        <div className="grid grid-cols-2 gap-3 mt-4">
                           <Button
-                            onClick={() => handleLinkedInConnect(participant)}
-                            size="sm"
-                            variant="outline"
-                            className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 
-                                     hover:text-blue-300 text-xs px-3 py-1.5 h-auto font-medium"
+                            onClick={() => handleAddContact(participant)}
+                            disabled={participantButtonState.addContact}
+                            className="bg-mintGreen hover:bg-mintGreen/90 disabled:bg-mintGreen/30 
+                                     text-white disabled:text-white/60 border-0 font-medium 
+                                     px-4 py-3 h-auto rounded-lg text-sm
+                                     transition-all duration-200 transform hover:scale-105 active:scale-95
+                                     shadow-lg hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed"
                           >
-                            <Linkedin className="w-3 h-3 mr-1.5" />
-                            Connect
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            {participantButtonState.addContact ? 'Request Sent' : 'Add Contact'}
                           </Button>
-                        )}
+                          
+                          <Button
+                            onClick={() => handleInviteToHTime(participant)}
+                            disabled={participantButtonState.invite}
+                            className="bg-white hover:bg-gray-50 disabled:bg-gray-100 
+                                     text-gray-800 disabled:text-gray-400 border border-gray-200 disabled:border-gray-200
+                                     font-medium px-4 py-3 h-auto rounded-lg text-sm
+                                     transition-all duration-200 transform hover:scale-105 active:scale-95
+                                     shadow-lg hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed"
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            {participantButtonState.invite ? 'Invited' : 'Invite to hTime'}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
           )}
         </div>
 
-        {/* Control Buttons - Only show if this is the host view */}
-        {window.location.pathname === '/live-session' && (
+        {/* Control Buttons - Only show for admin view */}
+        {isAdminView && (
           <>
             {isActive && (
               <Button 
@@ -296,6 +332,16 @@ const LiveSession = () => {
               </Button>
             )}
           </>
+        )}
+
+        {/* User view navigation */}
+        {!isAdminView && (
+          <Button 
+            onClick={() => navigate('/')}
+            className="w-full glass-button text-lg py-4"
+          >
+            Back to Home
+          </Button>
         )}
       </div>
     </div>
