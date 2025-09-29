@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Users, Wifi, X, QrCode } from 'lucide-react';
+import { Users, Wifi, X, QrCode, UserPlus, Send, Calendar, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,6 +70,28 @@ const LiveSession = () => {
     localStorage.setItem('qr-session-active', 'true');
     localStorage.setItem('qr-session-started', 'true');
     console.log('Starting live session');
+  };
+
+  // Action handlers for participant interactions
+  const handleAddContact = (participant: Participant) => {
+    console.log('Adding contact:', participant.name);
+    // This will require Supabase integration for backend logic
+  };
+
+  const handleInviteToHTime = (participant: Participant) => {
+    console.log('Inviting to hTime:', participant.name);
+    // This will require Supabase integration for user detection and invitations
+  };
+
+  const handleScheduleMeeting = (participant: Participant) => {
+    console.log('Scheduling meeting with:', participant.name);
+    // This will require integration with calendar/scheduling system
+  };
+
+  const handleLinkedInConnect = (participant: Participant) => {
+    if (participant.linkedinUrl) {
+      window.open(participant.linkedinUrl, '_blank');
+    }
   };
 
   // Show "No Session Initiated" state if no session has been started
@@ -173,24 +195,76 @@ const LiveSession = () => {
               .map((participant, index) => (
                 <div 
                   key={participant.id}
-                  className="glass-card p-4 animate-fade-in"
+                  className="glass-card p-5 animate-fade-in"
                   style={{ animationDelay: `${index * 200}ms` }}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-mintGreen to-mintGreen/70 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-mintGreen to-mintGreen/70 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                       {participant.name.split(' ').map(n => n[0]).join('')}
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lightGray text-lg">{participant.name}</h3>
-                      <p className="text-mintGreen text-sm">{participant.company}</p>
-                      <p className="text-lightGray/50 text-xs">{participant.email}</p>
-                      {participant.phone && (
-                        <p className="text-lightGray/50 text-xs">{participant.phone}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
-                      <span className="text-xs text-lightGray/50">Online</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lightGray text-lg">{participant.name}</h3>
+                          <p className="text-mintGreen text-sm">{participant.company}</p>
+                          <p className="text-lightGray/50 text-xs">{participant.email}</p>
+                          {participant.phone && (
+                            <p className="text-lightGray/50 text-xs">{participant.phone}</p>
+                          )}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="w-3 h-3 rounded-full bg-green-500 mb-1" />
+                          <span className="text-xs text-lightGray/50">Online</span>
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Button
+                          onClick={() => handleAddContact(participant)}
+                          size="sm"
+                          className="bg-mintGreen/20 hover:bg-mintGreen/30 text-mintGreen border border-mintGreen/30 
+                                   hover:border-mintGreen/50 text-xs px-3 py-1.5 h-auto font-medium"
+                        >
+                          <UserPlus className="w-3 h-3 mr-1.5" />
+                          Add Contact
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleInviteToHTime(participant)}
+                          size="sm"
+                          variant="outline"
+                          className="text-lightGray/70 border-lightGray/30 hover:bg-lightGray/10 
+                                   hover:text-lightGray text-xs px-3 py-1.5 h-auto font-medium"
+                        >
+                          <Send className="w-3 h-3 mr-1.5" />
+                          Invite to hTime
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleScheduleMeeting(participant)}
+                          size="sm"
+                          variant="outline"
+                          className="text-lightGray/70 border-lightGray/30 hover:bg-lightGray/10 
+                                   hover:text-lightGray text-xs px-3 py-1.5 h-auto font-medium"
+                        >
+                          <Calendar className="w-3 h-3 mr-1.5" />
+                          Schedule
+                        </Button>
+                        
+                        {participant.linkedinUrl && (
+                          <Button
+                            onClick={() => handleLinkedInConnect(participant)}
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 
+                                     hover:text-blue-300 text-xs px-3 py-1.5 h-auto font-medium"
+                          >
+                            <Linkedin className="w-3 h-3 mr-1.5" />
+                            Connect
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
