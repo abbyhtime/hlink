@@ -11,6 +11,14 @@ interface Message {
   sender: 'user' | 'assistant';
   timestamp: Date;
   typing?: boolean;
+  timeSlots?: TimeSlot[];
+}
+
+interface TimeSlot {
+  id: string;
+  day: string;
+  time: string;
+  available: boolean;
 }
 
 const Assistant = () => {
@@ -30,6 +38,7 @@ const Assistant = () => {
     duration: '',
     timing: ''
   });
+  const [scheduledSlot, setScheduledSlot] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const extractInfoFromMessage = (message: string) => {
@@ -103,7 +112,17 @@ const Assistant = () => {
     
     // If we have everything, suggest times
     if (!needsPurpose && !needsDuration && !needsTiming) {
-      return `Perfect! I have all the details:\n• Purpose: ${updatedContext.purpose}\n• Duration: ${updatedContext.duration}\n• Timing: ${updatedContext.timing}\n\nLet me check your calendar... I found 3 great time slots:\n\n📅 Tuesday 9:30 AM - 10:00 AM\n📅 Wednesday 10:00 AM - 10:30 AM\n📅 Thursday 9:00 AM - 9:30 AM\n\nWhich works best for you?`;
+      const timeSlots: TimeSlot[] = [
+        { id: '1', day: 'Tuesday', time: '9:30 AM - 10:00 AM', available: true },
+        { id: '2', day: 'Wednesday', time: '10:00 AM - 10:30 AM', available: true },
+        { id: '3', day: 'Thursday', time: '9:00 AM - 9:30 AM', available: true }
+      ];
+      
+      // Return message object with timeSlots
+      return {
+        content: `Perfect! I have all the details:\n• Purpose: ${updatedContext.purpose}\n• Duration: ${updatedContext.duration}\n• Timing: ${updatedContext.timing}\n\nI found 3 great time slots that match your preferences:`,
+        timeSlots
+      };
     }
     
     // General availability queries
@@ -128,6 +147,19 @@ const Assistant = () => {
     }
     
     return response;
+  };
+
+  const handleTimeSlotClick = (timeSlot: TimeSlot) => {
+    setScheduledSlot(`${timeSlot.day} ${timeSlot.time}`);
+    
+    const confirmationMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: `Perfect! Your ${conversationContext.purpose} is now scheduled for ${timeSlot.day} ${timeSlot.time}. I'll send calendar invites to all participants shortly. Is there anything else you need help with?`,
+      sender: 'assistant',
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, confirmationMessage]);
   };
 
   const scrollToBottom = () => {
@@ -157,9 +189,10 @@ const Assistant = () => {
       const smartResponse = getSmartResponse(inputValue);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: smartResponse,
+        content: typeof smartResponse === 'string' ? smartResponse : smartResponse.content,
         sender: 'assistant',
         timestamp: new Date(),
+        timeSlots: typeof smartResponse === 'object' ? smartResponse.timeSlots : undefined
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -219,7 +252,31 @@ const Assistant = () => {
                     : "bg-lightGray/10 text-lightGray rounded-bl-md border border-lightGray/20"
                 )}
               >
-                <p className="text-sm leading-relaxed">{message.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
+                
+                {/* Interactive Time Slots */}
+                {message.timeSlots && message.timeSlots.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {message.timeSlots.map((slot) => (
+                      <Button
+                        key={slot.id}
+                        onClick={() => handleTimeSlotClick(slot)}
+                        disabled={scheduledSlot !== null}
+                        className={`w-full justify-start bg-lightGray/5 hover:bg-mintGreen/20 border border-lightGray/20 hover:border-mintGreen/50 text-lightGray hover:text-mintGreen transition-all duration-200 ${
+                          scheduledSlot === `${slot.day} ${slot.time}` ? 'bg-mintGreen/20 border-mintGreen text-mintGreen' : ''
+                        }`}
+                        variant="outline"
+                      >
+                        <Calendar className="w-4 h-4 mr-3" />
+                        <div className="text-left">
+                          <div className="font-medium">{slot.day}</div>
+                          <div className="text-sm opacity-70">{slot.time}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                
                 <p className={cn(
                   "text-xs mt-2 opacity-70",
                   message.sender === 'user' ? "text-white/70" : "text-lightGray/50"
