@@ -12,6 +12,13 @@ interface Message {
   timestamp: Date;
   typing?: boolean;
   timeSlots?: TimeSlot[];
+  followUpActions?: FollowUpAction[];
+}
+
+interface FollowUpAction {
+  id: string;
+  text: string;
+  type: 'reminder' | 'contact';
 }
 
 interface TimeSlot {
@@ -39,6 +46,8 @@ const Assistant = () => {
     timing: ''
   });
   const [scheduledSlot, setScheduledSlot] = useState<string | null>(null);
+  const [conversationStage, setConversationStage] = useState<'scheduling' | 'scheduled' | 'closing' | 'followup' | 'complete'>('scheduling');
+  const [selectedFollowUpActions, setSelectedFollowUpActions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const extractInfoFromMessage = (message: string) => {
@@ -101,6 +110,29 @@ const Assistant = () => {
   const getSmartResponse = (userMessage: string) => {
     const message = userMessage.toLowerCase();
     
+    // Handle different conversation stages
+    if (conversationStage === 'scheduled') {
+      // Check if user is declining additional help
+      if (message.includes('no') || message.includes('nah') || message.includes('naah') || 
+          message.includes('thanks') || message.includes('good') || message.includes('all set')) {
+        setConversationStage('closing');
+        
+        const followUpActions: FollowUpAction[] = [
+          { id: 'reminder', text: 'Send reminder if invite not accepted', type: 'reminder' },
+          { id: 'contact', text: 'Provide contact details (if not hTime user)', type: 'contact' }
+        ];
+        
+        return {
+          content: "Great! Thanks for reaching out. I will let John know you have requested a meeting. If he is unable to accept or would like to propose an alternative time, I'll let you know.\n\nWould you like me to set up any of these additional options?",
+          followUpActions
+        };
+      }
+    }
+    
+    if (conversationStage === 'closing') {
+      return "Thanks! I have all the information I need. We'll be in touch soon with the meeting confirmation and any updates. Have a great day!";
+    }
+    
     // Update conversation context with new information
     const updatedContext = extractInfoFromMessage(userMessage);
     setConversationContext(updatedContext);
@@ -151,10 +183,27 @@ const Assistant = () => {
 
   const handleTimeSlotClick = (timeSlot: TimeSlot) => {
     setScheduledSlot(`${timeSlot.day} ${timeSlot.time}`);
+    setConversationStage('scheduled');
     
     const confirmationMessage: Message = {
       id: (Date.now() + 1).toString(),
       content: `Perfect! Your ${conversationContext.purpose} is now scheduled for ${timeSlot.day} ${timeSlot.time}. I'll send calendar invites to all participants shortly. Is there anything else you need help with?`,
+      sender: 'assistant',
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, confirmationMessage]);
+  };
+
+  const handleFollowUpClick = (action: FollowUpAction) => {
+    const actionText = action.type === 'reminder' ? 'send reminders if the invite is not accepted' : 'provide contact details for non-hTime users';
+    
+    setSelectedFollowUpActions(prev => [...prev, action.id]);
+    setConversationStage('complete');
+    
+    const confirmationMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      content: `Perfect! I've noted that you'd like me to ${actionText}. Thanks for providing all the details! We'll be in touch soon with the meeting confirmation and any updates. Have a great day!`,
       sender: 'assistant',
       timestamp: new Date(),
     };
@@ -192,7 +241,8 @@ const Assistant = () => {
         content: typeof smartResponse === 'string' ? smartResponse : smartResponse.content,
         sender: 'assistant',
         timestamp: new Date(),
-        timeSlots: typeof smartResponse === 'object' ? smartResponse.timeSlots : undefined
+        timeSlots: typeof smartResponse === 'object' ? smartResponse.timeSlots : undefined,
+        followUpActions: typeof smartResponse === 'object' ? smartResponse.followUpActions : undefined
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -271,6 +321,28 @@ const Assistant = () => {
                         <div className="text-left">
                           <div className="font-medium">{slot.day}</div>
                           <div className="text-sm opacity-70">{slot.time}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Interactive Follow-up Actions */}
+                {message.followUpActions && message.followUpActions.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {message.followUpActions.map((action) => (
+                      <Button
+                        key={action.id}
+                        onClick={() => handleFollowUpClick(action)}
+                        disabled={selectedFollowUpActions.includes(action.id) || conversationStage === 'complete'}
+                        className={`w-full justify-start bg-lightGray/5 hover:bg-mintGreen/20 border border-lightGray/20 hover:border-mintGreen/50 text-lightGray hover:text-mintGreen transition-all duration-200 ${
+                          selectedFollowUpActions.includes(action.id) ? 'bg-mintGreen/20 border-mintGreen text-mintGreen' : ''
+                        }`}
+                        variant="outline"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-3" />
+                        <div className="text-left">
+                          <div className="font-medium">{action.text}</div>
                         </div>
                       </Button>
                     ))}
