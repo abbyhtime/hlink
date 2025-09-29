@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import LiveSession from "./pages/LiveSession";
 import JoinSession from "./pages/JoinSession";
+import Assistant from "./pages/Assistant";
+import ContactPrivacy from "./pages/ContactPrivacy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/live-session" element={<LiveSession />} />
           <Route path="/join/:sessionCode" element={<JoinSession />} />
           <Route path="/join" element={<JoinSession />} />
+          <Route path="/assistant" element={<Assistant />} />
+          <Route path="/contacts" element={<ContactPrivacy />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
