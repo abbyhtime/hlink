@@ -25,48 +25,109 @@ const Assistant = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationContext, setConversationContext] = useState({
+    purpose: '',
+    duration: '',
+    timing: ''
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const extractInfoFromMessage = (message: string) => {
+    const lowerMessage = message.toLowerCase();
+    const newContext = { ...conversationContext };
+    
+    // Extract purpose/context
+    if (lowerMessage.includes('call') || lowerMessage.includes('meeting') || lowerMessage.includes('discuss') || 
+        lowerMessage.includes('review') || lowerMessage.includes('catchup') || lowerMessage.includes('forecasting') ||
+        lowerMessage.includes('project') || lowerMessage.includes('planning') || lowerMessage.includes('sync')) {
+      if (!newContext.purpose) {
+        if (lowerMessage.includes('forecasting')) newContext.purpose = 'forecasting call';
+        else if (lowerMessage.includes('catchup')) newContext.purpose = 'regular catchup';
+        else if (lowerMessage.includes('project')) newContext.purpose = 'project discussion';
+        else if (lowerMessage.includes('review')) newContext.purpose = 'review meeting';
+        else if (lowerMessage.includes('planning')) newContext.purpose = 'planning session';
+        else newContext.purpose = 'meeting';
+      }
+    }
+    
+    // Extract duration
+    if (lowerMessage.includes('30 min') || lowerMessage.includes('thirty min') || lowerMessage.includes('half hour')) {
+      newContext.duration = '30 minutes';
+    } else if (lowerMessage.includes('hour') || lowerMessage.includes('1 hour') || lowerMessage.includes('60 min')) {
+      newContext.duration = '1 hour';
+    } else if (lowerMessage.includes('15 min') || lowerMessage.includes('quick') || lowerMessage.includes('brief')) {
+      newContext.duration = '15 minutes';
+    } else if (lowerMessage.includes('no more than')) {
+      if (lowerMessage.includes('30')) newContext.duration = '30 minutes max';
+      else if (lowerMessage.includes('hour')) newContext.duration = '1 hour max';
+    }
+    
+    // Extract timing preferences
+    if (lowerMessage.includes('morning') || lowerMessage.includes('afternoon') || lowerMessage.includes('evening') ||
+        lowerMessage.includes('tuesday') || lowerMessage.includes('wednesday') || lowerMessage.includes('thursday') ||
+        lowerMessage.includes('friday') || lowerMessage.includes('monday') || lowerMessage.includes('tomorrow') ||
+        lowerMessage.includes('next week') || lowerMessage.includes('this week')) {
+      if (!newContext.timing) {
+        if (lowerMessage.includes('morning')) {
+          if (lowerMessage.includes('tuesday') && lowerMessage.includes('thursday')) {
+            newContext.timing = 'mornings, Tuesday to Thursday';
+          } else {
+            newContext.timing = 'mornings';
+          }
+        } else if (lowerMessage.includes('afternoon')) {
+          newContext.timing = 'afternoons';
+        } else if (lowerMessage.includes('tuesday') && lowerMessage.includes('thursday')) {
+          newContext.timing = 'Tuesday to Thursday';
+        } else if (lowerMessage.includes('tomorrow')) {
+          newContext.timing = 'tomorrow';
+        } else if (lowerMessage.includes('next week')) {
+          newContext.timing = 'next week';
+        }
+      }
+    }
+    
+    return newContext;
+  };
 
   const getSmartResponse = (userMessage: string) => {
     const message = userMessage.toLowerCase();
     
-    // Check if user provided complete info (context + duration + time)
-    if ((message.includes('meet') || message.includes('call') || message.includes('discussion')) &&
-        (message.includes('30 min') || message.includes('hour') || message.includes('quick')) &&
-        (message.includes('tuesday') || message.includes('tomorrow') || message.includes('next week'))) {
-      return "Perfect! I have all the details I need. Let me check your calendar... I found 3 great time slots:\n\n📅 Tuesday 2:00 PM - 2:30 PM\n📅 Tuesday 4:00 PM - 4:30 PM\n📅 Wednesday 10:00 AM - 10:30 AM\n\nWhich works best for you?";
-    }
+    // Update conversation context with new information
+    const updatedContext = extractInfoFromMessage(userMessage);
+    setConversationContext(updatedContext);
     
-    // Context-related responses
-    if (message.includes('project') || message.includes('discuss') || message.includes('review')) {
-      return "Great! I understand this is about project discussion. How long do you anticipate this meeting will last? And do you have any specific time preferences?";
-    }
+    // Check what information we still need
+    const needsPurpose = !updatedContext.purpose;
+    const needsDuration = !updatedContext.duration;
+    const needsTiming = !updatedContext.timing;
     
-    // Duration-related responses
-    if (message.includes('30 min') || message.includes('quick') || message.includes('brief')) {
-      return "Perfect, a 30-minute meeting. What's the main purpose of this meeting? Also, do you have any preferred days or times?";
-    }
-    
-    // Time-related responses
-    if (message.includes('tomorrow') || message.includes('next week') || message.includes('tuesday')) {
-      return "Good timing preference! What's the context for this meeting, and how long should it be?";
+    // If we have everything, suggest times
+    if (!needsPurpose && !needsDuration && !needsTiming) {
+      return `Perfect! I have all the details:\n• Purpose: ${updatedContext.purpose}\n• Duration: ${updatedContext.duration}\n• Timing: ${updatedContext.timing}\n\nLet me check your calendar... I found 3 great time slots:\n\n📅 Tuesday 9:30 AM - 10:00 AM\n📅 Wednesday 10:00 AM - 10:30 AM\n📅 Thursday 9:00 AM - 9:30 AM\n\nWhich works best for you?`;
     }
     
     // General availability queries
-    if (message.includes('free') || message.includes('available') || message.includes('this week')) {
+    if (message.includes('available') || message.includes('free') && message.includes('next')) {
       return "Looking at your calendar, you have good availability this week. Tuesday afternoon, Wednesday morning, and Friday are relatively open. What type of meeting are you looking to schedule?";
     }
     
-    // Default responses with personality
-    const responses = [
-      "I'd be happy to help schedule that! To find the perfect time, I'll need to know: What's the meeting about? How long should it be? Any time preferences?",
-      "Absolutely! Let me gather some details. What's the purpose of this meeting and how long do you expect it to last?",
-      "Great! I'll help you find the ideal time slot. Could you tell me more about the meeting context and your preferred timing?",
-      "Perfect timing to reach out! What's the meeting regarding, and do you have a duration in mind?",
-      "I'm on it! To suggest the best options, I need to know the meeting purpose, duration, and any time preferences you have."
-    ];
+    // Build response based on missing information
+    let response = "Great! ";
+    const missing = [];
     
-    return responses[Math.floor(Math.random() * responses.length)];
+    if (needsPurpose) missing.push("What's the main purpose of this meeting?");
+    if (needsDuration) missing.push("How long should it be?");
+    if (needsTiming) missing.push("Do you have any preferred days or times?");
+    
+    if (missing.length === 3) {
+      return "I'd be happy to help schedule that! To find the perfect time, I'll need to know: What's the meeting about? How long should it be? Any time preferences?";
+    } else if (missing.length === 2) {
+      response += missing.join(" And ");
+    } else if (missing.length === 1) {
+      response += missing[0];
+    }
+    
+    return response;
   };
 
   const scrollToBottom = () => {
