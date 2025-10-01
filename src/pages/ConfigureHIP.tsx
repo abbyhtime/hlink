@@ -110,6 +110,10 @@ const ConfigureHIP = () => {
   };
 
   const handleSave = async () => {
+    console.log('💾 Save button clicked');
+    console.log('Current username:', username);
+    console.log('Current config:', config);
+    
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -117,9 +121,12 @@ const ConfigureHIP = () => {
 
       // Validate username
       if (!validateUsername(username)) {
+        console.error('❌ Username validation failed');
         setSaving(false);
         return;
       }
+
+      console.log('✓ Username validated');
 
       // Check if username is already taken
       const { data: existingProfile } = await supabase
@@ -130,12 +137,16 @@ const ConfigureHIP = () => {
         .maybeSingle();
 
       if (existingProfile) {
+        console.error('❌ Username already taken');
         setUsernameError('Username is already taken');
         setSaving(false);
         return;
       }
 
+      console.log('✓ Username available');
+
       // Update profile username
+      console.log('📝 Updating profile...');
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -143,9 +154,15 @@ const ConfigureHIP = () => {
           username: username,
         });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('❌ Profile update error:', profileError);
+        throw profileError;
+      }
+
+      console.log('✓ Profile updated');
 
       // Update hip configuration
+      console.log('📝 Updating hip configuration...');
       const { error } = await supabase
         .from('hip_configurations')
         .upsert({
@@ -153,13 +170,27 @@ const ConfigureHIP = () => {
           ...config,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Config update error:', error);
+        throw error;
+      }
+
+      console.log('✅ Configuration saved successfully!');
 
       toast({
         title: 'Success!',
-        description: 'Your hIP configuration has been saved.',
+        description: config.is_public 
+          ? `Your hIP is now live at /hip/${username}` 
+          : 'Your hIP configuration has been saved.',
       });
+
+      // Reload to show updated status
+      setTimeout(() => {
+        console.log('🔄 Reloading page...');
+        window.location.reload();
+      }, 1500);
     } catch (error: any) {
+      console.error('❌ Save error:', error);
       toast({
         title: 'Error',
         description: error.message,
