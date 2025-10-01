@@ -10,6 +10,7 @@ const MyAssistant = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [agent, setAgent] = useState<any>(null);
+  const [username, setUsername] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +39,17 @@ const MyAssistant = () => {
       }
 
       setAgent(data);
+
+      // Load username
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (profileData?.username) {
+        setUsername(profileData.username);
+      }
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -117,10 +129,11 @@ const MyAssistant = () => {
                 <Button 
                   className="w-full" 
                   variant="outline"
-                  onClick={() => navigate(`/hip/${agent.user_id}`)}
+                  onClick={() => navigate(`/hip/${username || agent.user_id}`)}
+                  disabled={!username}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview Public Page
+                  {username ? 'Preview Public Page' : 'Set Username First'}
                 </Button>
               </div>
             </CardContent>

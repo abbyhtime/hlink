@@ -16,6 +16,8 @@ const ConfigureHIP = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [usernameError, setUsernameError] = useState<string>('');
   
   const [config, setConfig] = useState({
     is_public: false,
@@ -41,6 +43,17 @@ const ConfigureHIP = () => {
       }
 
       setUserId(user.id);
+
+      // Load profile username
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (profileData?.username) {
+        setUsername(profileData.username);
+      }
 
       const { data, error } = await supabase
         .from('hip_configurations')
@@ -74,12 +87,65 @@ const ConfigureHIP = () => {
     }
   };
 
+  const validateUsername = (value: string): boolean => {
+    if (!value) {
+      setUsernameError('Username is required');
+      return false;
+    }
+    if (value.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+      setUsernameError('Username can only contain letters, numbers, hyphens, and underscores');
+      return false;
+    }
+    setUsernameError('');
+    return true;
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    validateUsername(value);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Validate username
+      if (!validateUsername(username)) {
+        setSaving(false);
+        return;
+      }
+
+      // Check if username is already taken
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        setUsernameError('Username is already taken');
+        setSaving(false);
+        return;
+      }
+
+      // Update profile username
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          username: username,
+        });
+
+      if (profileError) throw profileError;
+
+      // Update hip configuration
       const { error } = await supabase
         .from('hip_configurations')
         .upsert({
@@ -121,6 +187,52 @@ const ConfigureHIP = () => {
         </div>
 
         <div className="space-y-6">
+          {config.is_public && username && (
+            <Card className="border-sage bg-sage/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sage">🌐 Your hIP is Public</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Share your link: <span className="font-mono text-sage">/hip/{username}</span>
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(`/hip/${username}`)}
+                  >
+                    View Live Page
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Username</CardTitle>
+              <CardDescription>Your unique URL identifier</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="your-username"
+                value={username}
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                className={usernameError ? 'border-destructive' : ''}
+              />
+              {usernameError ? (
+                <p className="text-sm text-destructive">{usernameError}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Your page will be available at: /hip/{username || 'your-username'}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Visibility Settings</CardTitle>
@@ -218,17 +330,19 @@ const ConfigureHIP = () => {
           </Card>
 
           <div className="flex gap-4">
-            <Button onClick={handleSave} disabled={saving} className="flex-1">
+            <Button onClick={handleSave} disabled={saving || !!usernameError} className="flex-1">
               <Save className="mr-2 h-4 w-4" />
               {saving ? 'Saving...' : 'Save Configuration'}
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate(`/hip/${userId}`)}
-              className="flex-1"
-            >
-              Preview
-            </Button>
+            {username && (
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(`/hip/${username}`)}
+                className="flex-1"
+              >
+                Preview
+              </Button>
+            )}
           </div>
         </div>
       </div>

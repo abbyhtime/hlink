@@ -20,13 +20,28 @@ const PublicProfile = () => {
   const loadPublicProfile = async () => {
     try {
       // Load profile by username or user_id
-      const { data: profileData, error: profileError } = await supabase
+      let profileData = null;
+      
+      // Try to find by username first
+      const { data: byUsername, error: usernameError } = await supabase
         .from('profiles')
         .select('*')
         .eq('username', username)
         .maybeSingle();
+      
+      if (byUsername) {
+        profileData = byUsername;
+      } else {
+        // If not found by username, try by user_id
+        const { data: byId, error: idError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', username)
+          .maybeSingle();
+        
+        profileData = byId;
+      }
 
-      if (profileError) throw profileError;
       if (!profileData) {
         setLoading(false);
         return;
