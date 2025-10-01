@@ -233,21 +233,30 @@ const ConfigureHIP = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={config.is_public ? 'border-sage' : ''}>
             <CardHeader>
               <CardTitle>Visibility Settings</CardTitle>
-              <CardDescription>Control who can see your hIP</CardDescription>
+              <CardDescription>
+                {!username || usernameError 
+                  ? '⚠️ Set a valid username before publishing' 
+                  : 'Control who can see your hIP'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="public">Make Profile Public</Label>
-                  <p className="text-sm text-muted-foreground">Allow anyone to access your hIP</p>
+                  <p className="text-sm text-muted-foreground">
+                    {config.is_public 
+                      ? '✓ Your hIP is public (remember to save!)' 
+                      : 'Your hIP is currently private'}
+                  </p>
                 </div>
                 <Switch
                   id="public"
                   checked={config.is_public}
                   onCheckedChange={(checked) => setConfig({ ...config, is_public: checked })}
+                  disabled={!username || !!usernameError}
                 />
               </div>
               <div className="flex items-center justify-between">

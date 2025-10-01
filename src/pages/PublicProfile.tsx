@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar as CalendarIcon, MessageSquare } from 'lucide-react';
 import CalendarView from '@/components/CalendarView';
+import ChatInterface from '@/components/ChatInterface';
 
 const PublicProfile = () => {
   const { username } = useParams();
@@ -149,13 +150,12 @@ const PublicProfile = () => {
                   Chat with {agent.name}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="bg-muted rounded-lg p-4 h-96 flex items-center justify-center">
-                  <p className="text-muted-foreground text-center">
-                    Chat interface will be integrated here
-                    <br />
-                    <span className="text-sm">(Coming soon)</span>
-                  </p>
+              <CardContent className="p-0">
+                <div className="h-[500px]">
+                  <ChatInterface 
+                    agentName={agent.name}
+                    agentPersonality={agent.personality}
+                  />
                 </div>
               </CardContent>
             </Card>

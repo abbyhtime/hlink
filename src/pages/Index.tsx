@@ -55,8 +55,8 @@ const Index = () => {
                   </h3>
                   <p className="text-gray-300 text-sm mb-4">
                     {hasAgent 
-                      ? 'View your assistant settings and configure your public profile page'
-                      : 'Create your AI-powered executive assistant to automate scheduling and manage meetings'
+                      ? 'Use your assistant internally or publish it as a public hIP (hTime Inquiry Page) for others to interact with'
+                      : 'Get your AI-powered executive assistant. Use it privately for scheduling or publish it as a public inquiry page'
                     }
                   </p>
                   <Button 
