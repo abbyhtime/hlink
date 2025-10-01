@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Calendar as CalendarIcon, MessageSquare } from 'lucide-react';
 import CalendarView from '@/components/CalendarView';
 import ChatInterface from '@/components/ChatInterface';
+import SuggestedVenues from '@/components/SuggestedVenues';
 
 const PublicProfile = () => {
   const { username } = useParams();
@@ -126,25 +127,30 @@ const PublicProfile = () => {
 
         {/* Main Content */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Calendar Section */}
-          {config.show_calendar && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" style={{ color: brandColors.primary }} />
-                  Schedule a Meeting
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CalendarView 
-                  config={config}
-                  onTimeSlotSelect={(time) => {
-                    setSelectedTimeSlot(time);
-                  }}
-                />
-              </CardContent>
-            </Card>
-          )}
+          <div className="space-y-6">
+            {/* Calendar Section */}
+            {config.show_calendar && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5" style={{ color: brandColors.primary }} />
+                    Schedule a Meeting
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CalendarView 
+                    config={config}
+                    onTimeSlotSelect={(time) => {
+                      setSelectedTimeSlot(time);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Suggested Venues Section */}
+            <SuggestedVenues config={config} />
+          </div>
 
           {/* Chatbot Section */}
           {config.show_chatbot && agent && (

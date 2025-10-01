@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { MapPin, Video, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface CalendarViewProps {
   config: any;
@@ -37,21 +36,6 @@ const CalendarView = ({ config, onTimeSlotSelect }: CalendarViewProps) => {
     'End of day slot - consider energy levels for important discussions',
     'Morning slots tend to have better engagement for strategy discussions',
   ];
-
-  // Suggested venues based on meeting type
-  const suggestedVenues = {
-    'in-person': [
-      { name: 'Starbucks Downtown', address: '123 Main St', mapsUrl: 'https://maps.google.com/?q=Starbucks+Downtown' },
-      { name: 'WeWork Hub', address: '456 Tech Blvd', mapsUrl: 'https://maps.google.com/?q=WeWork+Hub' },
-      { name: 'Local Coffee Co', address: '789 Park Ave', mapsUrl: 'https://maps.google.com/?q=Local+Coffee+Co' },
-    ],
-    'virtual': [
-      { name: 'Zoom', icon: Video, url: 'https://zoom.us' },
-      { name: 'Google Meet', icon: Video, url: 'https://meet.google.com' },
-      { name: 'Microsoft Teams', icon: Video, url: 'https://teams.microsoft.com' },
-      { name: 'WhatsApp', icon: Video, url: 'https://whatsapp.com' },
-    ]
-  };
 
   // Generate random alerts for time slots when date changes
   useEffect(() => {
@@ -121,64 +105,6 @@ const CalendarView = ({ config, onTimeSlotSelect }: CalendarViewProps) => {
         </Card>
       )}
 
-      {/* Suggested Venues Section */}
-      {config?.show_suggested_venues && selectedTime && (
-        <Card className="p-4">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Suggested Venues
-          </h3>
-          
-          {config?.preferred_meeting_types?.includes('in-person') && (
-            <div className="mb-4">
-              <h4 className="text-sm font-medium mb-2">In-Person Options</h4>
-              <div className="space-y-2">
-                {suggestedVenues['in-person'].map((venue) => (
-                  <a
-                    key={venue.name}
-                    href={venue.mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-2 rounded hover:bg-accent transition-colors"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{venue.name}</p>
-                      <p className="text-xs text-muted-foreground">{venue.address}</p>
-                    </div>
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {config?.preferred_meeting_types?.includes('virtual') && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Virtual Platforms</h4>
-              <div className="flex flex-wrap gap-2">
-                {suggestedVenues['virtual']
-                  .filter(platform => 
-                    config?.virtual_platforms?.includes(platform.name.toLowerCase()) ||
-                    config?.virtual_platforms?.includes(platform.name.toLowerCase().replace(' ', ''))
-                  )
-                  .map((platform) => (
-                    <a
-                      key={platform.name}
-                      href={platform.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 flex items-center gap-1">
-                        <platform.icon className="h-3 w-3" />
-                        {platform.name}
-                      </Badge>
-                    </a>
-                  ))}
-              </div>
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   );
 };

@@ -37,7 +37,7 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting,
   useEffect(() => {
     const welcomeMessage: Message = {
       role: 'assistant',
-      content: `Hi! I'm ${agentName}, Alex's personal assistant. Ask about availability or choose a time from the calendar. Connect your calendar for quick scheduling.`,
+      content: `Hi! I'm ${agentName}, ${agentName.split(' ')[0]}'s personal assistant. Ask about availability or choose a time from the calendar. Connect your calendar for quick scheduling.`,
       timestamp: new Date(),
       buttons: [
         {
@@ -101,11 +101,71 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting,
         inputElement.focus();
         inputElement.placeholder = 'Enter meeting details...';
       }
+    } else if (action === 'signup_htime') {
+      window.open('https://htime.io/signup', '_blank');
+      const followUpMessage: Message = {
+        role: 'assistant',
+        content: 'Great choice! If you don\'t wish to sign up, I can set up a reminder for this meeting instead.',
+        timestamp: new Date(),
+        buttons: [
+          {
+            label: 'Set 24h Reminder',
+            action: 'set_reminder'
+          },
+          {
+            label: 'No, thanks',
+            action: 'close_conversation'
+          }
+        ]
+      };
+      setMessages(prev => [...prev, followUpMessage]);
+    } else if (action === 'set_reminder') {
+      const reminderMessage: Message = {
+        role: 'assistant',
+        content: '24-hour reminder set! Can I help with anything else?',
+        timestamp: new Date(),
+        buttons: [
+          {
+            label: 'Yes, please',
+            action: 'continue_chat'
+          },
+          {
+            label: 'No, that\'s all',
+            action: 'close_conversation'
+          }
+        ]
+      };
+      setMessages(prev => [...prev, reminderMessage]);
+    } else if (action === 'close_conversation') {
+      const refNumber = `REF-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      const closingMessage: Message = {
+        role: 'assistant',
+        content: `Thanks! Email sent with reference number ${refNumber}. Feel free to come back and give me your reference number for further actions. Have a nice day!`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, closingMessage]);
+    } else if (action === 'continue_chat') {
+      const continueMessage: Message = {
+        role: 'assistant',
+        content: 'Sure! What else can I help you with?',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, continueMessage]);
     } else if (action === 'confirm_meeting') {
       const confirmMessage: Message = {
         role: 'assistant',
-        content: `Perfect! Meeting scheduled for ${selectedTimeSlot}. You'll receive a confirmation email shortly.`,
-        timestamp: new Date()
+        content: `Perfect! Meeting scheduled for ${selectedTimeSlot}.\n\nWould you like your own PA (Personal Assistant)? Signup with hTime, claim and configure your PA and we can make scheduling invisible to you!`,
+        timestamp: new Date(),
+        buttons: [
+          {
+            label: 'Signup to hTime',
+            action: 'signup_htime'
+          },
+          {
+            label: 'Set 24h Reminder',
+            action: 'set_reminder'
+          }
+        ]
       };
       setMessages(prev => [...prev, confirmMessage]);
       if (onScheduleMeeting) {
@@ -276,12 +336,22 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting,
       setMessages(prev => [...prev, userMessage]);
       setInput('');
       
-      // Confirm meeting directly
+      // Confirm meeting and show post-meeting flow
       setTimeout(() => {
         const confirmMessage: Message = {
           role: 'assistant',
-          content: `Perfect! Meeting scheduled for ${selectedTimeSlot}. You'll receive a confirmation email shortly.`,
-          timestamp: new Date()
+          content: `Perfect! Meeting scheduled for ${selectedTimeSlot}.\n\nDetails: ${input}\n\nWould you like your own PA (Personal Assistant)? Signup with hTime, claim and configure your PA and we can make scheduling invisible to you!`,
+          timestamp: new Date(),
+          buttons: [
+            {
+              label: 'Signup to hTime',
+              action: 'signup_htime'
+            },
+            {
+              label: 'Set 24h Reminder',
+              action: 'set_reminder'
+            }
+          ]
         };
         setMessages(prev => [...prev, confirmMessage]);
         if (onScheduleMeeting) {

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Settings, Eye } from 'lucide-react';
+import AgentEditDialog from '@/components/AgentEditDialog';
 
 const MyAssistant = () => {
   const navigate = useNavigate();
@@ -102,10 +103,7 @@ const MyAssistant = () => {
                   ))}
                 </div>
               </div>
-              <Button className="w-full" variant="outline">
-                <Settings className="mr-2 h-4 w-4" />
-                Edit Assistant
-              </Button>
+              <AgentEditDialog agent={agent} onUpdate={loadAgent} />
             </CardContent>
           </Card>
 
