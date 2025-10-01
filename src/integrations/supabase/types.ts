@@ -14,7 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agent_memory: {
+        Row: {
+          agent_id: string
+          content: Json
+          created_at: string | null
+          id: string
+          memory_type: string
+          metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          content: Json
+          created_at?: string | null
+          id?: string
+          memory_type: string
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          memory_type?: string
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memory_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "executive_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      executive_agents: {
+        Row: {
+          appearance: Json | null
+          capabilities: Json | null
+          context: Json | null
+          created_at: string | null
+          gender: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          personality: string | null
+          updated_at: string | null
+          user_id: string
+          voice: string | null
+        }
+        Insert: {
+          appearance?: Json | null
+          capabilities?: Json | null
+          context?: Json | null
+          created_at?: string | null
+          gender?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          personality?: string | null
+          updated_at?: string | null
+          user_id: string
+          voice?: string | null
+        }
+        Update: {
+          appearance?: Json | null
+          capabilities?: Json | null
+          context?: Json | null
+          created_at?: string | null
+          gender?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          personality?: string | null
+          updated_at?: string | null
+          user_id?: string
+          voice?: string | null
+        }
+        Relationships: []
+      }
+      hip_configurations: {
+        Row: {
+          brand_colors: Json | null
+          created_at: string | null
+          custom_domain: string | null
+          id: string
+          is_public: boolean | null
+          profile_description: string | null
+          show_calendar: boolean | null
+          show_chatbot: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_colors?: Json | null
+          created_at?: string | null
+          custom_domain?: string | null
+          id?: string
+          is_public?: boolean | null
+          profile_description?: string | null
+          show_calendar?: boolean | null
+          show_chatbot?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_colors?: Json | null
+          created_at?: string | null
+          custom_domain?: string | null
+          id?: string
+          is_public?: boolean | null
+          profile_description?: string | null
+          show_calendar?: boolean | null
+          show_chatbot?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
