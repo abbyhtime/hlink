@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Calendar as CalendarIcon, MessageSquare, Settings, MapPin, Video, Palette } from 'lucide-react';
+import { Loader2, Save, Calendar as CalendarIcon, MessageSquare, Settings, MapPin, Video, Palette, RotateCcw } from 'lucide-react';
 import { ImageUploadField } from '@/components/ImageUploadField';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -169,6 +169,31 @@ const ConfigureHIP = () => {
   const handleUsernameChange = (value: string) => {
     setUsername(value);
     validateUsername(value);
+  };
+
+  const handleRestoreDefaults = () => {
+    setConfig({
+      ...config,
+      custom_theme: {
+        backgroundColor: 'hsl(var(--background))',
+        cardBackground: 'hsl(var(--card))',
+        primaryColor: 'hsl(var(--primary))',
+        secondaryColor: 'hsl(var(--secondary))',
+        accentColor: 'hsl(var(--accent))',
+        textColor: 'hsl(var(--foreground))',
+        borderColor: 'hsl(var(--border))',
+        borderRadius: '0.5rem',
+        sectionSpacing: '2rem',
+      },
+      banner_image_url: '',
+      agent_avatar_url: '',
+      custom_css: '',
+    });
+
+    toast({
+      title: 'Defaults Restored',
+      description: 'Visual customization settings have been reset. Remember to save your changes.',
+    });
   };
 
   const handleSave = async () => {
@@ -445,11 +470,24 @@ const ConfigureHIP = () => {
           {/* Visual Customization */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" />
-                Visual Customization
-              </CardTitle>
-              <CardDescription>Upload images and customize your page theme</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="h-5 w-5" />
+                    Visual Customization
+                  </CardTitle>
+                  <CardDescription>Upload images and customize your page theme</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRestoreDefaults}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Restore Defaults
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Banner Image Upload */}
