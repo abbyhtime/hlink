@@ -99,40 +99,82 @@ export type Database = {
       }
       hip_configurations: {
         Row: {
+          assistant_interaction_level: string | null
           brand_colors: Json | null
+          collect_guest_email: boolean | null
           created_at: string | null
           custom_domain: string | null
+          enable_calendar_connection_flow: boolean | null
+          enable_calendar_integration: boolean | null
+          enable_interactive_buttons: boolean | null
+          enable_meeting_reminders: boolean | null
+          enable_meeting_scheduling: boolean | null
           id: string
           is_public: boolean | null
+          preferred_meeting_types: Json | null
           profile_description: string | null
+          require_meeting_purpose: boolean | null
           show_calendar: boolean | null
           show_chatbot: boolean | null
+          show_intelligent_alerts: boolean | null
+          show_smart_scheduling: boolean | null
+          show_suggested_venues: boolean | null
           updated_at: string | null
           user_id: string
+          venue_recommendations: Json | null
+          virtual_platforms: Json | null
         }
         Insert: {
+          assistant_interaction_level?: string | null
           brand_colors?: Json | null
+          collect_guest_email?: boolean | null
           created_at?: string | null
           custom_domain?: string | null
+          enable_calendar_connection_flow?: boolean | null
+          enable_calendar_integration?: boolean | null
+          enable_interactive_buttons?: boolean | null
+          enable_meeting_reminders?: boolean | null
+          enable_meeting_scheduling?: boolean | null
           id?: string
           is_public?: boolean | null
+          preferred_meeting_types?: Json | null
           profile_description?: string | null
+          require_meeting_purpose?: boolean | null
           show_calendar?: boolean | null
           show_chatbot?: boolean | null
+          show_intelligent_alerts?: boolean | null
+          show_smart_scheduling?: boolean | null
+          show_suggested_venues?: boolean | null
           updated_at?: string | null
           user_id: string
+          venue_recommendations?: Json | null
+          virtual_platforms?: Json | null
         }
         Update: {
+          assistant_interaction_level?: string | null
           brand_colors?: Json | null
+          collect_guest_email?: boolean | null
           created_at?: string | null
           custom_domain?: string | null
+          enable_calendar_connection_flow?: boolean | null
+          enable_calendar_integration?: boolean | null
+          enable_interactive_buttons?: boolean | null
+          enable_meeting_reminders?: boolean | null
+          enable_meeting_scheduling?: boolean | null
           id?: string
           is_public?: boolean | null
+          preferred_meeting_types?: Json | null
           profile_description?: string | null
+          require_meeting_purpose?: boolean | null
           show_calendar?: boolean | null
           show_chatbot?: boolean | null
+          show_intelligent_alerts?: boolean | null
+          show_smart_scheduling?: boolean | null
+          show_suggested_venues?: boolean | null
           updated_at?: string | null
           user_id?: string
+          venue_recommendations?: Json | null
+          virtual_platforms?: Json | null
         }
         Relationships: []
       }

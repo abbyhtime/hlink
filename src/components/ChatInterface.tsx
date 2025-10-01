@@ -13,9 +13,10 @@ interface Message {
 interface ChatInterfaceProps {
   agentName: string;
   agentPersonality?: string;
+  config?: any;
 }
 
-const ChatInterface = ({ agentName, agentPersonality }: ChatInterfaceProps) => {
+const ChatInterface = ({ agentName, agentPersonality, config }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',

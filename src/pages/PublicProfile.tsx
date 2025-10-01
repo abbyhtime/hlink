@@ -136,7 +136,7 @@ const PublicProfile = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <CalendarView />
+                <CalendarView config={config} />
               </CardContent>
             </Card>
           )}
@@ -155,6 +155,7 @@ const PublicProfile = () => {
                   <ChatInterface 
                     agentName={agent.name}
                     agentPersonality={agent.personality}
+                    config={config}
                   />
                 </div>
               </CardContent>

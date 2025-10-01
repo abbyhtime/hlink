@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/components/ui/use-toast';
-import { Loader2, Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Save, Calendar as CalendarIcon, MessageSquare, Settings, MapPin, Video } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const ConfigureHIP = () => {
   const navigate = useNavigate();
@@ -28,6 +31,23 @@ const ConfigureHIP = () => {
       primary: '#479E7D',
       secondary: '#2A2A2A',
     },
+    // Calendar features
+    show_intelligent_alerts: true,
+    show_suggested_venues: true,
+    enable_calendar_integration: true,
+    show_smart_scheduling: true,
+    // Meeting flow
+    enable_meeting_scheduling: true,
+    require_meeting_purpose: true,
+    enable_meeting_reminders: true,
+    collect_guest_email: true,
+    // Assistant settings
+    assistant_interaction_level: 'enhanced',
+    enable_interactive_buttons: true,
+    enable_calendar_connection_flow: true,
+    // Preferences
+    preferred_meeting_types: ['in-person', 'virtual'],
+    virtual_platforms: ['zoom', 'teams', 'meet'],
   });
 
   useEffect(() => {
@@ -67,6 +87,11 @@ const ConfigureHIP = () => {
         const brandColors = typeof data.brand_colors === 'object' && data.brand_colors !== null
           ? data.brand_colors as { primary: string; secondary: string }
           : config.brand_colors;
+
+        // Type guard for string arrays
+        const isStringArray = (arr: any): arr is string[] => {
+          return Array.isArray(arr) && arr.every(item => typeof item === 'string');
+        };
           
         setConfig({
           is_public: data.is_public,
@@ -74,6 +99,19 @@ const ConfigureHIP = () => {
           show_chatbot: data.show_chatbot,
           profile_description: data.profile_description || '',
           brand_colors: brandColors,
+          show_intelligent_alerts: data.show_intelligent_alerts ?? true,
+          show_suggested_venues: data.show_suggested_venues ?? true,
+          enable_calendar_integration: data.enable_calendar_integration ?? true,
+          show_smart_scheduling: data.show_smart_scheduling ?? true,
+          enable_meeting_scheduling: data.enable_meeting_scheduling ?? true,
+          require_meeting_purpose: data.require_meeting_purpose ?? true,
+          enable_meeting_reminders: data.enable_meeting_reminders ?? true,
+          collect_guest_email: data.collect_guest_email ?? true,
+          assistant_interaction_level: data.assistant_interaction_level || 'enhanced',
+          enable_interactive_buttons: data.enable_interactive_buttons ?? true,
+          enable_calendar_connection_flow: data.enable_calendar_connection_flow ?? true,
+          preferred_meeting_types: isStringArray(data.preferred_meeting_types) ? data.preferred_meeting_types : ['in-person', 'virtual'],
+          virtual_platforms: isStringArray(data.virtual_platforms) ? data.virtual_platforms : ['zoom', 'teams', 'meet'],
         });
       }
     } catch (error: any) {
@@ -366,6 +404,236 @@ const ConfigureHIP = () => {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Advanced Features */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Advanced Features
+              </CardTitle>
+              <CardDescription>Configure intelligent scheduling and assistant behavior</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="multiple" className="w-full">
+                {/* Calendar Features */}
+                <AccordionItem value="calendar">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      Calendar Features
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Intelligent Alerts</Label>
+                        <p className="text-sm text-muted-foreground">Show contextual warnings about time slots</p>
+                      </div>
+                      <Switch
+                        checked={config.show_intelligent_alerts}
+                        onCheckedChange={(checked) => setConfig({ ...config, show_intelligent_alerts: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Suggested Venues</Label>
+                        <p className="text-sm text-muted-foreground">Display venue recommendations</p>
+                      </div>
+                      <Switch
+                        checked={config.show_suggested_venues}
+                        onCheckedChange={(checked) => setConfig({ ...config, show_suggested_venues: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Calendar Integration</Label>
+                        <p className="text-sm text-muted-foreground">Prompt users to connect Google Calendar</p>
+                      </div>
+                      <Switch
+                        checked={config.enable_calendar_integration}
+                        onCheckedChange={(checked) => setConfig({ ...config, enable_calendar_integration: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Smart Scheduling</Label>
+                        <p className="text-sm text-muted-foreground">AI-powered scheduling suggestions</p>
+                      </div>
+                      <Switch
+                        checked={config.show_smart_scheduling}
+                        onCheckedChange={(checked) => setConfig({ ...config, show_smart_scheduling: checked })}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Meeting Flow */}
+                <AccordionItem value="meeting">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4" />
+                      Meeting Flow
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Enable Meeting Scheduling</Label>
+                        <p className="text-sm text-muted-foreground">Allow visitors to schedule meetings</p>
+                      </div>
+                      <Switch
+                        checked={config.enable_meeting_scheduling}
+                        onCheckedChange={(checked) => setConfig({ ...config, enable_meeting_scheduling: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Require Meeting Purpose</Label>
+                        <p className="text-sm text-muted-foreground">Ask for meeting context before scheduling</p>
+                      </div>
+                      <Switch
+                        checked={config.require_meeting_purpose}
+                        onCheckedChange={(checked) => setConfig({ ...config, require_meeting_purpose: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Meeting Reminders</Label>
+                        <p className="text-sm text-muted-foreground">Offer reminder setup options</p>
+                      </div>
+                      <Switch
+                        checked={config.enable_meeting_reminders}
+                        onCheckedChange={(checked) => setConfig({ ...config, enable_meeting_reminders: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Collect Guest Email</Label>
+                        <p className="text-sm text-muted-foreground">Request visitor email for invitations</p>
+                      </div>
+                      <Switch
+                        checked={config.collect_guest_email}
+                        onCheckedChange={(checked) => setConfig({ ...config, collect_guest_email: checked })}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Assistant Behavior */}
+                <AccordionItem value="assistant">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      Assistant Behavior
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>Interaction Level</Label>
+                      <Select
+                        value={config.assistant_interaction_level}
+                        onValueChange={(value) => setConfig({ ...config, assistant_interaction_level: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="basic">Basic - Simple responses</SelectItem>
+                          <SelectItem value="enhanced">Enhanced - Contextual assistance</SelectItem>
+                          <SelectItem value="full">Full - Complete automation</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Interactive Buttons</Label>
+                        <p className="text-sm text-muted-foreground">Show action buttons in chat</p>
+                      </div>
+                      <Switch
+                        checked={config.enable_interactive_buttons}
+                        onCheckedChange={(checked) => setConfig({ ...config, enable_interactive_buttons: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Calendar Connection Flow</Label>
+                        <p className="text-sm text-muted-foreground">Allow Google Calendar SSO in chat</p>
+                      </div>
+                      <Switch
+                        checked={config.enable_calendar_connection_flow}
+                        onCheckedChange={(checked) => setConfig({ ...config, enable_calendar_connection_flow: checked })}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Meeting Preferences */}
+                <AccordionItem value="preferences">
+                  <AccordionTrigger className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Meeting Preferences
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-4">
+                    <div className="space-y-3">
+                      <Label>Preferred Meeting Types</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="in-person"
+                            checked={config.preferred_meeting_types.includes('in-person')}
+                            onCheckedChange={(checked) => {
+                              const types = checked
+                                ? [...config.preferred_meeting_types, 'in-person']
+                                : config.preferred_meeting_types.filter((t: string) => t !== 'in-person');
+                              setConfig({ ...config, preferred_meeting_types: types });
+                            }}
+                          />
+                          <label htmlFor="in-person" className="text-sm">In-Person Meetings</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="virtual"
+                            checked={config.preferred_meeting_types.includes('virtual')}
+                            onCheckedChange={(checked) => {
+                              const types = checked
+                                ? [...config.preferred_meeting_types, 'virtual']
+                                : config.preferred_meeting_types.filter((t: string) => t !== 'virtual');
+                              setConfig({ ...config, preferred_meeting_types: types });
+                            }}
+                          />
+                          <label htmlFor="virtual" className="text-sm">Virtual Meetings</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Virtual Platforms</Label>
+                      <div className="space-y-2">
+                        {['zoom', 'teams', 'meet', 'whatsapp'].map((platform) => (
+                          <div key={platform} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={platform}
+                              checked={config.virtual_platforms.includes(platform)}
+                              onCheckedChange={(checked) => {
+                                const platforms = checked
+                                  ? [...config.virtual_platforms, platform]
+                                  : config.virtual_platforms.filter((p: string) => p !== platform);
+                                setConfig({ ...config, virtual_platforms: platforms });
+                              }}
+                            />
+                            <label htmlFor={platform} className="text-sm capitalize">{platform}</label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
 
