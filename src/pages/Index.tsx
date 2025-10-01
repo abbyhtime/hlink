@@ -1,37 +1,35 @@
-
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import ContactForm from '@/components/ContactForm';
 import QuickActions from '@/components/QuickActions';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Shield, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { Sparkles } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [hasAgent, setHasAgent] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const checkAgent = async () => {
+      if (user) {
+        const { data: agent } = await supabase
+          .from('executive_agents')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        setHasAgent(!!agent);
+      }
+      setLoading(false);
+    };
 
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      // Check if user has an agent
-      const { data } = await supabase
-        .from('executive_agents')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      setHasAgent(!!data);
-    }
-    setLoading(false);
-  };
+    checkAgent();
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-charcoal">
@@ -60,7 +58,13 @@ const Index = () => {
                     }
                   </p>
                   <Button 
-                    onClick={() => navigate(hasAgent ? '/my-assistant' : '/claim-assistant')}
+                    onClick={() => {
+                      if (!user) {
+                        navigate('/auth');
+                      } else {
+                        navigate(hasAgent ? '/my-assistant' : '/claim-assistant');
+                      }
+                    }}
                     variant="default"
                   >
                     {hasAgent ? 'View Dashboard' : 'Get Started'}

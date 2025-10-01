@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,9 +18,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 const ConfigureHIP = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userId, setUserId] = useState<string>('');
   const [username, setUsername] = useState<string>('');
   const [usernameError, setUsernameError] = useState<string>('');
   
@@ -67,18 +68,15 @@ const ConfigureHIP = () => {
   });
 
   useEffect(() => {
-    loadConfig();
-  }, []);
+    if (user) {
+      loadConfig();
+    }
+  }, [user]);
 
   const loadConfig = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/auth');
-        return;
-      }
+    if (!user) return;
 
-      setUserId(user.id);
+    try {
 
       // Load profile username
       const { data: profileData } = await supabase

@@ -1,19 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkUserAndRedirect = async () => {
+      if (user) {
+        // Check if user has an agent
+        const { data: agent } = await supabase
+          .from('executive_agents')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (agent) {
+          navigate('/my-assistant');
+        } else {
+          navigate('/claim-assistant');
+        }
+      }
+    };
+
+    if (!authLoading) {
+      checkUserAndRedirect();
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +57,8 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: 'Account created!',
-        description: 'Please check your email to verify your account.',
+        title: 'Success',
+        description: 'Account created successfully!',
       });
     } catch (error: any) {
       toast({
@@ -57,7 +83,10 @@ const Auth = () => {
 
       if (error) throw error;
 
-      navigate('/');
+      toast({
+        title: 'Success',
+        description: 'Signed in successfully',
+      });
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -68,6 +97,14 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-charcoal via-charcoal to-sage/10 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-sage" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-charcoal flex items-center justify-center p-4">

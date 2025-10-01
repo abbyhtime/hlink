@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import LiveSession from "./pages/LiveSession";
 import JoinSession from "./pages/JoinSession";
@@ -25,21 +27,44 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/live-session" element={<LiveSession />} />
-            <Route path="/join/:sessionCode" element={<JoinSession />} />
-            <Route path="/join" element={<JoinSession />} />
-            <Route path="/assistant" element={<Assistant />} />
-            <Route path="/contacts" element={<ContactPrivacy />} />
-            <Route path="/claim-assistant" element={<ClaimAssistant />} />
-            <Route path="/my-assistant" element={<MyAssistant />} />
-            <Route path="/configure-hip" element={<ConfigureHIP />} />
-            <Route path="/hip/:username" element={<PublicProfile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/live-session" element={<LiveSession />} />
+              <Route path="/join/:sessionCode" element={<JoinSession />} />
+              <Route path="/join" element={<JoinSession />} />
+              <Route path="/assistant" element={<Assistant />} />
+              <Route path="/contacts" element={<ContactPrivacy />} />
+              <Route path="/hip/:username" element={<PublicProfile />} />
+              <Route
+                path="/claim-assistant"
+                element={
+                  <ProtectedRoute>
+                    <ClaimAssistant />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-assistant"
+                element={
+                  <ProtectedRoute>
+                    <MyAssistant />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configure-hip"
+                element={
+                  <ProtectedRoute>
+                    <ConfigureHIP />
+                  </ProtectedRoute>
+                }
+              />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

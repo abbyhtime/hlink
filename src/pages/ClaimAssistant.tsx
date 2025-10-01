@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import AgentPersonalization from '@/components/AgentPersonalization';
 import AgentCapabilities from '@/components/AgentCapabilities';
 import { Progress } from '@/components/ui/progress';
@@ -12,6 +13,7 @@ import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 const ClaimAssistant = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
@@ -43,10 +45,10 @@ const ClaimAssistant = () => {
   };
 
   const handleSubmit = async () => {
+    if (!user) return;
+
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
         .from('executive_agents')

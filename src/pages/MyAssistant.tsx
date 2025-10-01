@@ -1,31 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import { Loader2, Settings, Eye } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Settings, Eye, ArrowLeft } from 'lucide-react';
 import AgentEditDialog from '@/components/AgentEditDialog';
+import { DeleteAssistantDialog } from '@/components/DeleteAssistantDialog';
 
 const MyAssistant = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [agent, setAgent] = useState<any>(null);
   const [username, setUsername] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAgent();
-  }, []);
+  }, [user]);
 
   const loadAgent = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/auth');
-        return;
-      }
+    if (!user) return;
 
+    try {
       const { data, error } = await supabase
         .from('executive_agents')
         .select('*')
@@ -74,8 +73,24 @@ const MyAssistant = () => {
     <div className="min-h-screen bg-charcoal p-4">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">My Executive Assistant</h1>
-          <p className="text-gray-400">Manage your AI assistant settings and public profile</p>
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">My Executive Assistant</h1>
+              <p className="text-gray-400">Manage your AI assistant settings and public profile</p>
+            </div>
+            {agent && <DeleteAssistantDialog agentId={agent.id} />}
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
