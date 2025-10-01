@@ -168,7 +168,7 @@ const ConfigureHIP = () => {
         .upsert({
           user_id: user.id,
           ...config,
-        });
+        }, { onConflict: 'user_id' });
 
       if (error) {
         console.error('❌ Config update error:', error);
