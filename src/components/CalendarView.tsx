@@ -8,7 +8,7 @@ import { MapPin, Video, AlertTriangle } from 'lucide-react';
 
 interface CalendarViewProps {
   config: any;
-  onTimeSlotSelect?: (date: Date, time: string) => void;
+  onTimeSlotSelect?: (timeSlot: string) => void;
 }
 
 const CalendarView = ({ config, onTimeSlotSelect }: CalendarViewProps) => {
@@ -73,7 +73,8 @@ const CalendarView = ({ config, onTimeSlotSelect }: CalendarViewProps) => {
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
     if (selectedDate && onTimeSlotSelect) {
-      onTimeSlotSelect(selectedDate, time);
+      const formattedTimeSlot = `${format(selectedDate, 'PPP')} at ${time}`;
+      onTimeSlotSelect(formattedTimeSlot);
     }
   };
 

@@ -19,25 +19,25 @@ serve(async (req) => {
     }
 
     // Build system prompt based on config
-    let systemPrompt = `You are a professional executive assistant. Your role is to help schedule meetings and answer questions.`;
-    
-    if (config?.assistant_interaction_level === 'basic') {
-      systemPrompt += ` Keep responses brief and professional. Focus on confirming receipt of information.`;
-    } else if (config?.assistant_interaction_level === 'full') {
-      systemPrompt += ` Be proactive and helpful. Suggest meeting times, ask clarifying questions, and guide users through the scheduling process.`;
-      
-      if (config?.enable_calendar_integration) {
-        systemPrompt += ` Mention calendar integration when relevant.`;
-      }
-      if (config?.require_meeting_purpose) {
-        systemPrompt += ` Always ask for the meeting purpose if not provided.`;
-      }
-      if (config?.show_smart_scheduling) {
-        systemPrompt += ` Suggest optimal meeting times based on typical business hours.`;
-      }
-    } else {
-      systemPrompt += ` Be helpful and professional. Assist with scheduling and answer questions clearly.`;
-    }
+    let systemPrompt = `You are ${config?.agent_name || 'an executive assistant'}, Alex's personal assistant.
+
+CRITICAL RULES:
+- Keep responses EXTREMELY SHORT (1-2 sentences max)
+- Be direct and action-oriented
+- NEVER write paragraphs or verbose explanations
+- When action needed, keep it brief - buttons will appear automatically
+
+Current context:
+- Calendar connected: ${config?.calendar_connected ? 'yes' : 'no'}
+- Time slot selected: ${config?.selected_time_slot || 'none'}
+
+Conversation flows:
+1. If time selected but no details yet: Just ask "What's the meeting about?" (nothing more)
+2. If they provide details after time selection: Just say "Perfect! Meeting scheduled."
+3. If asked about availability: "Check the calendar or connect yours for quick scheduling."
+4. If discussing scheduling without time: "Pick a time from the calendar."
+
+Be conversational but BRIEF. No verbose explanations.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

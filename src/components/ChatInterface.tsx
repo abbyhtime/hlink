@@ -19,24 +19,65 @@ interface ChatInterfaceProps {
   agentName: string;
   agentPersonality?: string;
   config?: any;
-  onScheduleMeeting?: (timeSlot?: string) => void;
+  onScheduleMeeting?: (meetingData: any) => void;
+  onTimeSlotSelected?: string | null;
 }
 
-const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: `Hello! I'm ${agentName}. ${config?.enable_meeting_scheduling ? 'I can help you schedule a meeting or answer any questions you have.' : 'How can I help you today?'}`,
-      timestamp: new Date(),
-      buttons: config?.enable_interactive_buttons && config?.enable_meeting_scheduling ? [
-        { label: 'Schedule Meeting', action: 'schedule', data: {} }
-      ] : undefined,
-    },
-  ]);
+const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting, onTimeSlotSelected }: ChatInterfaceProps) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [conversationContext, setConversationContext] = useState<string[]>([]);
+  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [meetingDetails, setMeetingDetails] = useState('');
+
+  // Initial welcome message
+  useEffect(() => {
+    const welcomeMessage: Message = {
+      role: 'assistant',
+      content: `Hi! I'm ${agentName}, Alex's personal assistant. Ask about availability or choose a time from the calendar. Connect your calendar for quick scheduling.`,
+      timestamp: new Date(),
+      buttons: [
+        {
+          label: 'Connect Calendar',
+          action: 'connect_calendar'
+        }
+      ]
+    };
+    setMessages([welcomeMessage]);
+  }, [agentName]);
+
+  // Handle time slot selection from calendar
+  useEffect(() => {
+    if (onTimeSlotSelected && onTimeSlotSelected !== selectedTimeSlot) {
+      setSelectedTimeSlot(onTimeSlotSelected);
+      if (onTimeSlotSelected) {
+        const userMessage: Message = {
+          role: 'user',
+          content: `I'd like to schedule a meeting at ${onTimeSlotSelected}`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage]);
+        
+        setTimeout(() => {
+          const botMessage: Message = {
+            role: 'assistant',
+            content: "Great! What's the meeting about?",
+            timestamp: new Date(),
+            buttons: [
+              {
+                label: 'Enter Details',
+                action: 'enter_meeting_details'
+              }
+            ]
+          };
+          setMessages(prev => [...prev, botMessage]);
+        }, 500);
+      }
+    }
+  }, [onTimeSlotSelected]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -45,7 +86,32 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting 
   }, [messages]);
 
   const handleButtonClick = async (action: string, data?: any) => {
-    if (action === 'schedule') {
+    if (action === 'connect_calendar') {
+      setIsCalendarConnected(true);
+      const connectMessage: Message = {
+        role: 'assistant',
+        content: 'Calendar connected to test@gmail.com! Now I can find the best times for you.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, connectMessage]);
+    } else if (action === 'enter_meeting_details') {
+      // Focus on input field
+      const inputElement = document.querySelector('input[placeholder="Type your message..."]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.placeholder = 'Enter meeting details...';
+      }
+    } else if (action === 'confirm_meeting') {
+      const confirmMessage: Message = {
+        role: 'assistant',
+        content: `Perfect! Meeting scheduled for ${selectedTimeSlot}. You'll receive a confirmation email shortly.`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, confirmMessage]);
+      if (onScheduleMeeting) {
+        onScheduleMeeting({ time: selectedTimeSlot, details: data?.details || meetingDetails });
+      }
+    } else if (action === 'schedule') {
       const schedulingMessage: Message = {
         role: 'user',
         content: 'I would like to schedule a meeting',
@@ -71,6 +137,12 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting 
     setIsTyping(true);
     
     try {
+      const contextualConfig = {
+        ...config,
+        calendar_connected: isCalendarConnected,
+        selected_time_slot: selectedTimeSlot
+      };
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`, {
         method: 'POST',
         headers: {
@@ -81,7 +153,7 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting 
             role: m.role,
             content: m.content
           })),
-          config: config
+          config: contextualConfig
         }),
       });
 
@@ -146,7 +218,22 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting 
       }
 
       // Add interactive buttons based on conversation context
-      if (config?.enable_interactive_buttons && conversationContext.includes('user_wants_to_schedule')) {
+      if (selectedTimeSlot && assistantMessage.toLowerCase().includes('meeting about')) {
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[assistantIndex] = {
+            ...newMessages[assistantIndex],
+            buttons: [
+              {
+                label: 'Confirm Meeting',
+                action: 'confirm_meeting',
+                data: { time: selectedTimeSlot }
+              }
+            ]
+          };
+          return newMessages;
+        });
+      } else if (config?.enable_interactive_buttons && conversationContext.includes('user_wants_to_schedule')) {
         const timeSlots = ['9:00 AM', '10:30 AM', '2:00 PM', '4:00 PM'];
         setMessages(prev => {
           const newMessages = [...prev];
@@ -182,6 +269,27 @@ const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting 
       content: input,
       timestamp: new Date(),
     };
+
+    // Check if this is meeting details after time selection
+    if (selectedTimeSlot && !meetingDetails) {
+      setMeetingDetails(input);
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+      
+      // Confirm meeting directly
+      setTimeout(() => {
+        const confirmMessage: Message = {
+          role: 'assistant',
+          content: `Perfect! Meeting scheduled for ${selectedTimeSlot}. You'll receive a confirmation email shortly.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, confirmMessage]);
+        if (onScheduleMeeting) {
+          onScheduleMeeting({ time: selectedTimeSlot, details: input });
+        }
+      }, 500);
+      return;
+    }
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');

@@ -12,7 +12,7 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [agent, setAgent] = useState<any>(null);
   const [config, setConfig] = useState<any>(null);
-  const [showChat, setShowChat] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   useEffect(() => {
     loadPublicProfile();
@@ -136,7 +136,12 @@ const PublicProfile = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <CalendarView config={config} />
+                <CalendarView 
+                  config={config}
+                  onTimeSlotSelect={(time) => {
+                    setSelectedTimeSlot(time);
+                  }}
+                />
               </CardContent>
             </Card>
           )}
@@ -156,6 +161,11 @@ const PublicProfile = () => {
                     agentName={agent.name}
                     agentPersonality={agent.personality}
                     config={config}
+                    onTimeSlotSelected={selectedTimeSlot}
+                    onScheduleMeeting={(meetingData) => {
+                      console.log('Meeting scheduled:', meetingData);
+                      setSelectedTimeSlot(null);
+                    }}
                   />
                 </div>
               </CardContent>
