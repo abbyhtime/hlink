@@ -350,6 +350,17 @@ const ConfigureHIP = () => {
                   onCheckedChange={(checked) => setConfig({ ...config, show_chatbot: checked })}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="suggested-venues">Show Suggested Venues</Label>
+                  <p className="text-sm text-muted-foreground">Display venue recommendations section</p>
+                </div>
+                <Switch
+                  id="suggested-venues"
+                  checked={config.show_suggested_venues}
+                  onCheckedChange={(checked) => setConfig({ ...config, show_suggested_venues: checked })}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -435,16 +446,6 @@ const ConfigureHIP = () => {
                       <Switch
                         checked={config.show_intelligent_alerts}
                         onCheckedChange={(checked) => setConfig({ ...config, show_intelligent_alerts: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Suggested Venues</Label>
-                        <p className="text-sm text-muted-foreground">Display venue recommendations</p>
-                      </div>
-                      <Switch
-                        checked={config.show_suggested_venues}
-                        onCheckedChange={(checked) => setConfig({ ...config, show_suggested_venues: checked })}
                       />
                     </div>
                     <div className="flex items-center justify-between">

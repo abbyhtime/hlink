@@ -19,6 +19,14 @@ const PublicProfile = () => {
     loadPublicProfile();
   }, [username]);
 
+  // Force reload when component mounts to ensure fresh data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadPublicProfile();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const loadPublicProfile = async () => {
     try {
       // Load profile by username or user_id
