@@ -10,6 +10,11 @@ import JoinSession from "./pages/JoinSession";
 import Assistant from "./pages/Assistant";
 import ContactPrivacy from "./pages/ContactPrivacy";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import ClaimAssistant from "./pages/ClaimAssistant";
+import MyAssistant from "./pages/MyAssistant";
+import ConfigureHIP from "./pages/ConfigureHIP";
+import PublicProfile from "./pages/PublicProfile";
 
 const queryClient = new QueryClient();
 
@@ -21,11 +26,16 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/live-session" element={<LiveSession />} />
           <Route path="/join/:sessionCode" element={<JoinSession />} />
           <Route path="/join" element={<JoinSession />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/contacts" element={<ContactPrivacy />} />
+          <Route path="/claim-assistant" element={<ClaimAssistant />} />
+          <Route path="/my-assistant" element={<MyAssistant />} />
+          <Route path="/configure-hip" element={<ConfigureHIP />} />
+          <Route path="/hip/:username" element={<PublicProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
