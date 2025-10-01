@@ -19,71 +19,66 @@ const PublicProfile = () => {
     loadPublicProfile();
   }, [username]);
 
-  // Force reload when component mounts to ensure fresh data
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadPublicProfile();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
   const loadPublicProfile = async () => {
     try {
-      // Load profile by username or user_id
-      let profileData = null;
+      setLoading(true);
+      console.log('Loading profile for username:', username);
       
-      // Try to find by username first
-      const { data: byUsername, error: usernameError } = await supabase
+      // Use a single optimized query with joins to get all data at once
+      // This prevents race conditions and ensures data consistency
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle();
-      
-      if (byUsername) {
-        profileData = byUsername;
-      } else {
-        // If not found by username, try by user_id
-        const { data: byId, error: idError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', username)
-          .maybeSingle();
-        
-        profileData = byId;
+        .select(`
+          *,
+          hip_configurations!inner (
+            *
+          ),
+          executive_agents (
+            *
+          )
+        `)
+        .or(`username.eq.${username},id.eq.${username}`)
+        .eq('hip_configurations.is_public', true)
+        .limit(1)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        setLoading(false);
+        return;
       }
 
       if (!profileData) {
+        console.log('No profile data found');
         setLoading(false);
         return;
       }
 
+      console.log('Profile data loaded:', profileData);
+      
       setProfile(profileData);
-
-      // Load hip configuration
-      const { data: configData, error: configError } = await supabase
-        .from('hip_configurations')
-        .select('*')
-        .eq('user_id', profileData.id)
-        .eq('is_public', true)
-        .maybeSingle();
-
-      if (configError) throw configError;
+      
+      // Set config from the joined data
+      const configData = Array.isArray(profileData.hip_configurations) 
+        ? profileData.hip_configurations[0] 
+        : profileData.hip_configurations;
+      
       if (!configData) {
+        console.log('No config found');
         setLoading(false);
         return;
       }
-
+      
+      console.log('Config data:', configData);
       setConfig(configData);
 
-      // Load agent if chatbot is enabled
+      // Set agent from the joined data if chatbot is enabled
       if (configData.show_chatbot) {
-        const { data: agentData, error: agentError } = await supabase
-          .from('executive_agents')
-          .select('*')
-          .eq('user_id', profileData.id)
-          .maybeSingle();
-
-        if (agentError) throw agentError;
+        const agentData = Array.isArray(profileData.executive_agents) 
+          ? profileData.executive_agents[0] 
+          : profileData.executive_agents;
+        
+        console.log('Agent data:', agentData);
         setAgent(agentData);
       }
     } catch (error: any) {

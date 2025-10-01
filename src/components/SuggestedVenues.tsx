@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Video } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MapPin } from 'lucide-react';
+import zoomLogo from '@/assets/zoom-logo.png';
+import googleMeetLogo from '@/assets/google-meet-logo.png';
+import teamsLogo from '@/assets/teams-logo.png';
 
 interface SuggestedVenuesProps {
   config?: any;
@@ -14,9 +16,9 @@ const SuggestedVenues = ({ config }: SuggestedVenuesProps) => {
       { name: 'Local Coffee Co', address: '789 Park Ave', mapsUrl: 'https://maps.google.com/?q=Local+Coffee+Co' },
     ],
     'virtual': [
-      { name: 'Zoom', icon: Video, url: 'https://zoom.us' },
-      { name: 'Google Meet', icon: Video, url: 'https://meet.google.com' },
-      { name: 'Microsoft Teams', icon: Video, url: 'https://teams.microsoft.com' },
+      { name: 'Zoom', logo: zoomLogo, url: 'https://zoom.us' },
+      { name: 'Google Meet', logo: googleMeetLogo, url: 'https://meet.google.com' },
+      { name: 'Microsoft Teams', logo: teamsLogo, url: 'https://teams.microsoft.com' },
     ],
   };
 
@@ -69,23 +71,26 @@ const SuggestedVenues = ({ config }: SuggestedVenuesProps) => {
         {config?.preferred_meeting_types?.includes('virtual') && (
           <div>
             <h4 className="text-sm font-medium mb-2">Virtual Options</h4>
-            <div className="space-y-2">
+            <div className="flex gap-4 justify-start">
               {suggestedVenues['virtual'].map((platform) => {
-                const Icon = platform.icon;
                 return (
                   <a
                     key={platform.name}
                     href={platform.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 border rounded-lg hover:bg-accent transition-colors"
+                    className="block p-2 border rounded-lg hover:bg-accent transition-colors"
                     style={{ 
                       borderColor: customTheme.borderColor,
                       borderRadius: customTheme.borderRadius,
                     }}
+                    title={platform.name}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="font-medium">{platform.name}</span>
+                    <img 
+                      src={platform.logo} 
+                      alt={platform.name}
+                      className="h-10 w-10 object-contain"
+                    />
                   </a>
                 );
               })}

@@ -4,6 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface CalendarViewProps {
   config: any;
@@ -76,26 +82,36 @@ const CalendarView = ({ config, onTimeSlotSelect }: CalendarViewProps) => {
           <h3 className="font-semibold mb-3">
             Available times for {format(selectedDate, 'PPP')}
           </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {availableTimeSlots.map((time) => (
-              <div key={time} className="space-y-1">
-                <Button
-                  variant={selectedTime === time ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handleTimeSelect(time)}
-                  className="w-full"
-                >
-                  {time}
-                </Button>
-                {config?.show_intelligent_alerts && timeSlotAlerts[time] && (
-                  <div className="flex items-start gap-1 p-2 bg-amber-500/10 rounded text-xs text-amber-600 dark:text-amber-400">
-                    <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                    <span>{timeSlotAlerts[time]}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <TooltipProvider>
+            <div className="grid grid-cols-2 gap-2">
+              {availableTimeSlots.map((time) => {
+                const hasAlert = config?.show_intelligent_alerts && timeSlotAlerts[time];
+                
+                return (
+                  <Tooltip key={time}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={selectedTime === time ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handleTimeSelect(time)}
+                        className="w-full relative"
+                      >
+                        {time}
+                        {hasAlert && (
+                          <AlertTriangle className="h-3 w-3 ml-2 text-amber-500" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    {hasAlert && (
+                      <TooltipContent className="max-w-xs bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400">
+                        <p className="text-sm">{timeSlotAlerts[time]}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
 
           {selectedTime && (
             <Button className="w-full mt-4" disabled={!config?.enable_meeting_scheduling}>
