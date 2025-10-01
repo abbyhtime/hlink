@@ -1,38 +1,178 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Calendar, Clock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  buttons?: Array<{
+    label: string;
+    action: string;
+    data?: any;
+  }>;
 }
 
 interface ChatInterfaceProps {
   agentName: string;
   agentPersonality?: string;
   config?: any;
+  onScheduleMeeting?: (timeSlot?: string) => void;
 }
 
-const ChatInterface = ({ agentName, agentPersonality, config }: ChatInterfaceProps) => {
+const ChatInterface = ({ agentName, agentPersonality, config, onScheduleMeeting }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Hello! I'm ${agentName}. How can I help you today?`,
+      content: `Hello! I'm ${agentName}. ${config?.enable_meeting_scheduling ? 'I can help you schedule a meeting or answer any questions you have.' : 'How can I help you today?'}`,
       timestamp: new Date(),
+      buttons: config?.enable_interactive_buttons && config?.enable_meeting_scheduling ? [
+        { label: 'Schedule Meeting', action: 'schedule', data: {} }
+      ] : undefined,
     },
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [conversationContext, setConversationContext] = useState<string[]>([]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleButtonClick = async (action: string, data?: any) => {
+    if (action === 'schedule') {
+      const schedulingMessage: Message = {
+        role: 'user',
+        content: 'I would like to schedule a meeting',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, schedulingMessage]);
+      setConversationContext(prev => [...prev, 'user_wants_to_schedule']);
+      
+      await streamAIResponse([...messages, schedulingMessage]);
+    } else if (action === 'select_time') {
+      const timeMessage: Message = {
+        role: 'user',
+        content: `I'd like to book the ${data.time} time slot`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, timeMessage]);
+      
+      await streamAIResponse([...messages, timeMessage]);
+    }
+  };
+
+  const streamAIResponse = async (messageHistory: Message[]) => {
+    setIsTyping(true);
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messageHistory.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          config: config
+        }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error('Failed to start stream');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage = '';
+      let textBuffer = '';
+      let streamDone = false;
+
+      // Add empty assistant message to start
+      const assistantIndex = messageHistory.length;
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      }]);
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") {
+            streamDone = true;
+            break;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantMessage += content;
+              setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[assistantIndex] = {
+                  ...newMessages[assistantIndex],
+                  content: assistantMessage
+                };
+                return newMessages;
+              });
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Add interactive buttons based on conversation context
+      if (config?.enable_interactive_buttons && conversationContext.includes('user_wants_to_schedule')) {
+        const timeSlots = ['9:00 AM', '10:30 AM', '2:00 PM', '4:00 PM'];
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[assistantIndex] = {
+            ...newMessages[assistantIndex],
+            buttons: timeSlots.map(time => ({
+              label: time,
+              action: 'select_time',
+              data: { time }
+            }))
+          };
+          return newMessages;
+        });
+      }
+
+    } catch (error) {
+      console.error('Error streaming AI response:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'I apologize, but I encountered an error. Please try again.',
+        timestamp: new Date(),
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -45,40 +185,8 @@ const ChatInterface = ({ agentName, agentPersonality, config }: ChatInterfacePro
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-    setIsTyping(true);
-
-    // Simulate AI response based on interaction level
-    setTimeout(() => {
-      let responses: string[] = [];
-      
-      if (config?.assistant_interaction_level === 'basic') {
-        responses = [
-          `Thank you for your message. I'll get back to you soon.`,
-          `Message received. How can I help you today?`,
-          `I'm here to assist. What do you need?`,
-        ];
-      } else if (config?.assistant_interaction_level === 'full') {
-        responses = [
-          `I understand you're looking to schedule a meeting. ${config?.enable_calendar_integration ? 'Would you like to connect your Google Calendar for easier scheduling?' : 'Let me check the available time slots.'}`,
-          `Thank you for reaching out! ${config?.show_smart_scheduling ? 'Based on the calendar, I can suggest optimal meeting times. Do you need something ASAP or are you flexible?' : 'I can help you find a time slot.'}`,
-          `I'd be happy to coordinate this meeting. ${config?.require_meeting_purpose ? 'Could you briefly share the purpose or context for this meeting?' : 'What timeframe works best?'}`,
-        ];
-      } else {
-        responses = [
-          `I understand you're looking to schedule a meeting. Let me help you find the best time slot.`,
-          `Thank you for reaching out! I can assist you with scheduling and availability.`,
-          `Based on the current calendar, I can suggest meeting times for you.`,
-        ];
-      }
-
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 1500);
+    
+    await streamAIResponse([...messages, userMessage]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -104,7 +212,24 @@ const ChatInterface = ({ agentName, agentPersonality, config }: ChatInterfacePro
                     : 'bg-muted'
                 }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {message.buttons && message.buttons.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {message.buttons.map((button, btnIndex) => (
+                      <Button
+                        key={btnIndex}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleButtonClick(button.action, button.data)}
+                        className="text-xs"
+                      >
+                        {button.action === 'schedule' && <Calendar className="h-3 w-3 mr-1" />}
+                        {button.action === 'select_time' && <Clock className="h-3 w-3 mr-1" />}
+                        {button.label}
+                      </Button>
+                    ))}
+                  </div>
+                )}
                 <p className="text-xs opacity-70 mt-1">
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
