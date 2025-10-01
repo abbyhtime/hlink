@@ -47,11 +47,33 @@ const ChatInterface = ({ agentName, agentPersonality, config }: ChatInterfacePro
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response (replace with actual AI integration later)
+    // Simulate AI response based on interaction level
     setTimeout(() => {
+      let responses: string[] = [];
+      
+      if (config?.assistant_interaction_level === 'basic') {
+        responses = [
+          `Thank you for your message. I'll get back to you soon.`,
+          `Message received. How can I help you today?`,
+          `I'm here to assist. What do you need?`,
+        ];
+      } else if (config?.assistant_interaction_level === 'full') {
+        responses = [
+          `I understand you're looking to schedule a meeting. ${config?.enable_calendar_integration ? 'Would you like to connect your Google Calendar for easier scheduling?' : 'Let me check the available time slots.'}`,
+          `Thank you for reaching out! ${config?.show_smart_scheduling ? 'Based on the calendar, I can suggest optimal meeting times. Do you need something ASAP or are you flexible?' : 'I can help you find a time slot.'}`,
+          `I'd be happy to coordinate this meeting. ${config?.require_meeting_purpose ? 'Could you briefly share the purpose or context for this meeting?' : 'What timeframe works best?'}`,
+        ];
+      } else {
+        responses = [
+          `I understand you're looking to schedule a meeting. Let me help you find the best time slot.`,
+          `Thank you for reaching out! I can assist you with scheduling and availability.`,
+          `Based on the current calendar, I can suggest meeting times for you.`,
+        ];
+      }
+
       const assistantMessage: Message = {
         role: 'assistant',
-        content: `I understand you're asking about "${input}". I'm here to help schedule meetings and answer questions. This is a demo response - full AI integration coming soon!`,
+        content: responses[Math.floor(Math.random() * responses.length)],
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);
