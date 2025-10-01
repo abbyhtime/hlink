@@ -16,6 +16,7 @@ const MyAssistant = () => {
   const [agent, setAgent] = useState<any>(null);
   const [username, setUsername] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [isPublished, setIsPublished] = useState(false);
 
   useEffect(() => {
     loadAgent();
@@ -40,7 +41,7 @@ const MyAssistant = () => {
 
       setAgent(data);
 
-      // Load username
+      // Load username and hip config
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username')
@@ -49,6 +50,17 @@ const MyAssistant = () => {
       
       if (profileData?.username) {
         setUsername(profileData.username);
+      }
+
+      // Check if hIP is published
+      const { data: hipData } = await supabase
+        .from('hip_configurations')
+        .select('is_published')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (hipData) {
+        setIsPublished(hipData.is_published || false);
       }
     } catch (error: any) {
       toast({
@@ -85,10 +97,10 @@ const MyAssistant = () => {
             </Button>
           </div>
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">My Executive Assistant</h1>
-              <p className="text-gray-400">Manage your AI assistant settings and public profile</p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">My Personal Assistant</h1>
+            <p className="text-gray-400">Manage your AI assistant settings and Inquiry Page profile</p>
+          </div>
             {agent && <DeleteAssistantDialog agentId={agent.id} />}
           </div>
         </div>
@@ -124,7 +136,7 @@ const MyAssistant = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Public Profile (hIP)</CardTitle>
+              <CardTitle>hIP (hTime Inquiry Page)</CardTitle>
               <CardDescription>Configure your hTime Inquiry Page</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -143,10 +155,10 @@ const MyAssistant = () => {
                   className="w-full" 
                   variant="outline"
                   onClick={() => navigate(`/hip/${username || agent.user_id}`)}
-                  disabled={!username}
+                  disabled={!username || !isPublished}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  {username ? 'Preview Public Page' : 'Set Username First'}
+                  {!username ? 'Set Username First' : !isPublished ? 'Publish hIP First' : 'View Inquiry Page'}
                 </Button>
               </div>
             </CardContent>

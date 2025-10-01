@@ -113,8 +113,10 @@ export type Database = {
           enable_interactive_buttons: boolean | null
           enable_meeting_reminders: boolean | null
           enable_meeting_scheduling: boolean | null
+          has_unpublished_changes: boolean | null
           id: string
           is_public: boolean | null
+          is_published: boolean | null
           preferred_meeting_types: Json | null
           profile_description: string | null
           require_meeting_purpose: boolean | null
@@ -143,8 +145,10 @@ export type Database = {
           enable_interactive_buttons?: boolean | null
           enable_meeting_reminders?: boolean | null
           enable_meeting_scheduling?: boolean | null
+          has_unpublished_changes?: boolean | null
           id?: string
           is_public?: boolean | null
+          is_published?: boolean | null
           preferred_meeting_types?: Json | null
           profile_description?: string | null
           require_meeting_purpose?: boolean | null
@@ -173,8 +177,10 @@ export type Database = {
           enable_interactive_buttons?: boolean | null
           enable_meeting_reminders?: boolean | null
           enable_meeting_scheduling?: boolean | null
+          has_unpublished_changes?: boolean | null
           id?: string
           is_public?: boolean | null
+          is_published?: boolean | null
           preferred_meeting_types?: Json | null
           profile_description?: string | null
           require_meeting_purpose?: boolean | null

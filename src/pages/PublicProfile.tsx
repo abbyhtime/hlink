@@ -165,7 +165,7 @@ const PublicProfile = () => {
                 )}
                 <div>
                   <CardTitle className="text-3xl" style={{ color: brandColors.primary }}>
-                    {agent?.name || 'Executive Assistant'}
+                    {agent?.name || 'Personal Assistant'}
                   </CardTitle>
                   {config.profile_description && (
                     <p className="text-muted-foreground mt-2">{config.profile_description}</p>

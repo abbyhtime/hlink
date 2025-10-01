@@ -61,7 +61,7 @@ const ClaimAssistant = () => {
 
       toast({
         title: 'Success!',
-        description: 'Your executive assistant has been created.',
+        description: 'Your personal assistant has been created.',
       });
 
       navigate('/my-assistant');
@@ -86,7 +86,7 @@ const ClaimAssistant = () => {
     <div className="min-h-screen bg-charcoal p-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Claim Your Executive Assistant</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Claim Your Personal Assistant</h1>
           <p className="text-gray-400">Let's personalize your AI assistant in {totalSteps} simple steps</p>
           <Progress value={progress} className="mt-4" />
         </div>

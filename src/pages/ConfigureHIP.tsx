@@ -21,8 +21,13 @@ const ConfigureHIP = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [username, setUsername] = useState<string>('');
   const [usernameError, setUsernameError] = useState<string>('');
+  const [isDirty, setIsDirty] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   
   const [config, setConfig] = useState({
     is_public: false,
@@ -135,6 +140,8 @@ const ConfigureHIP = () => {
           agent_avatar_url: data.agent_avatar_url || '',
           custom_css: data.custom_css || '',
         });
+        setIsPublished(data.is_published || false);
+        setHasUnpublishedChanges(data.has_unpublished_changes || false);
       }
     } catch (error: any) {
       toast({
@@ -144,7 +151,21 @@ const ConfigureHIP = () => {
       });
     } finally {
       setLoading(false);
+      setInitialLoadComplete(true);
     }
+  };
+
+  // Track config and username changes after initial load
+  useEffect(() => {
+    if (initialLoadComplete) {
+      setIsDirty(true);
+    }
+  }, [config, username, initialLoadComplete]);
+
+  // Track form changes
+  const handleConfigChange = (updates: any) => {
+    setConfig({ ...config, ...updates });
+    setIsDirty(true);
   };
 
   const validateUsername = (value: string): boolean => {
@@ -187,6 +208,8 @@ const ConfigureHIP = () => {
       agent_avatar_url: '',
       custom_css: '',
     });
+    
+    setIsDirty(true);
 
     toast({
       title: 'Defaults Restored',
@@ -195,10 +218,6 @@ const ConfigureHIP = () => {
   };
 
   const handleSave = async () => {
-    console.log('💾 Save button clicked');
-    console.log('Current username:', username);
-    console.log('Current config:', config);
-    
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -206,12 +225,9 @@ const ConfigureHIP = () => {
 
       // Validate username
       if (!validateUsername(username)) {
-        console.error('❌ Username validation failed');
         setSaving(false);
         return;
       }
-
-      console.log('✓ Username validated');
 
       // Check if username is already taken
       const { data: existingProfile } = await supabase
@@ -222,16 +238,12 @@ const ConfigureHIP = () => {
         .maybeSingle();
 
       if (existingProfile) {
-        console.error('❌ Username already taken');
         setUsernameError('Username is already taken');
         setSaving(false);
         return;
       }
 
-      console.log('✓ Username available');
-
       // Update profile username
-      console.log('📝 Updating profile...');
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -239,43 +251,27 @@ const ConfigureHIP = () => {
           username: username,
         });
 
-      if (profileError) {
-        console.error('❌ Profile update error:', profileError);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
-      console.log('✓ Profile updated');
-
-      // Update hip configuration
-      console.log('📝 Updating hip configuration...');
+      // Save as draft - mark as having unpublished changes
       const { error } = await supabase
         .from('hip_configurations')
         .upsert({
           user_id: user.id,
           ...config,
+          has_unpublished_changes: true,
         }, { onConflict: 'user_id' });
 
-      if (error) {
-        console.error('❌ Config update error:', error);
-        throw error;
-      }
-
-      console.log('✅ Configuration saved successfully!');
+      if (error) throw error;
 
       toast({
-        title: 'Success!',
-        description: config.is_public 
-          ? `Your hIP is now live at /hip/${username}` 
-          : 'Your hIP configuration has been saved.',
+        title: 'Configuration Saved',
+        description: 'Your changes have been saved as a draft. Click "Publish" to make them live.',
       });
 
-      // Reload to show updated status
-      setTimeout(() => {
-        console.log('🔄 Reloading page...');
-        window.location.reload();
-      }, 1500);
+      setIsDirty(false);
+      setHasUnpublishedChanges(true);
     } catch (error: any) {
-      console.error('❌ Save error:', error);
       toast({
         title: 'Error',
         description: error.message,
@@ -283,6 +279,74 @@ const ConfigureHIP = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    setPublishing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Validate username
+      if (!validateUsername(username)) {
+        setPublishing(false);
+        return;
+      }
+
+      // Check if username is already taken
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        setUsernameError('Username is already taken');
+        setPublishing(false);
+        return;
+      }
+
+      // Update profile username
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          username: username,
+        });
+
+      if (profileError) throw profileError;
+
+      // Publish configuration
+      const { error } = await supabase
+        .from('hip_configurations')
+        .upsert({
+          user_id: user.id,
+          ...config,
+          is_public: true,
+          is_published: true,
+          has_unpublished_changes: false,
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Published!',
+        description: `Your hIP is now live at /hip/${username}`,
+      });
+
+      setIsDirty(false);
+      setIsPublished(true);
+      setHasUnpublishedChanges(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -849,19 +913,30 @@ const ConfigureHIP = () => {
           </Card>
 
           <div className="flex gap-4">
-            <Button onClick={handleSave} disabled={saving || !!usernameError} className="flex-1">
+            <Button 
+              onClick={handleSave} 
+              disabled={!isDirty || saving || !!usernameError || (isPublished && !hasUnpublishedChanges && !isDirty)}
+              variant="outline"
+              className="flex-1"
+            >
               <Save className="mr-2 h-4 w-4" />
-              {saving ? 'Saving...' : 'Save Configuration'}
+              {saving ? 'Saving...' : 'Save Config'}
             </Button>
-            {username && (
-              <Button 
-                variant="outline" 
-                onClick={() => navigate(`/hip/${username}`)}
-                className="flex-1"
-              >
-                Preview
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              onClick={() => username && navigate(`/hip/${username}`)}
+              disabled={!username || (!isDirty && !hasUnpublishedChanges && !isPublished)}
+              className="flex-1"
+            >
+              Preview
+            </Button>
+            <Button 
+              onClick={handlePublish}
+              disabled={!hasUnpublishedChanges && !isDirty && isPublished || publishing || !!usernameError}
+              className="flex-1"
+            >
+              {publishing ? 'Publishing...' : 'Publish'}
+            </Button>
           </div>
         </div>
       </div>
