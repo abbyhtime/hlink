@@ -99,11 +99,15 @@ export type Database = {
       }
       hip_configurations: {
         Row: {
+          agent_avatar_url: string | null
           assistant_interaction_level: string | null
+          banner_image_url: string | null
           brand_colors: Json | null
           collect_guest_email: boolean | null
           created_at: string | null
+          custom_css: string | null
           custom_domain: string | null
+          custom_theme: Json | null
           enable_calendar_connection_flow: boolean | null
           enable_calendar_integration: boolean | null
           enable_interactive_buttons: boolean | null
@@ -125,11 +129,15 @@ export type Database = {
           virtual_platforms: Json | null
         }
         Insert: {
+          agent_avatar_url?: string | null
           assistant_interaction_level?: string | null
+          banner_image_url?: string | null
           brand_colors?: Json | null
           collect_guest_email?: boolean | null
           created_at?: string | null
+          custom_css?: string | null
           custom_domain?: string | null
+          custom_theme?: Json | null
           enable_calendar_connection_flow?: boolean | null
           enable_calendar_integration?: boolean | null
           enable_interactive_buttons?: boolean | null
@@ -151,11 +159,15 @@ export type Database = {
           virtual_platforms?: Json | null
         }
         Update: {
+          agent_avatar_url?: string | null
           assistant_interaction_level?: string | null
+          banner_image_url?: string | null
           brand_colors?: Json | null
           collect_guest_email?: boolean | null
           created_at?: string | null
+          custom_css?: string | null
           custom_domain?: string | null
+          custom_theme?: Json | null
           enable_calendar_connection_flow?: boolean | null
           enable_calendar_integration?: boolean | null
           enable_interactive_buttons?: boolean | null
