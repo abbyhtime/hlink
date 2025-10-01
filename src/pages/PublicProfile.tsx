@@ -114,80 +114,142 @@ const PublicProfile = () => {
   }
 
   const brandColors = config.brand_colors || { primary: '#479E7D', secondary: '#2A2A2A' };
+  const customTheme = config.custom_theme || {};
+  const bannerUrl = config.banner_image_url;
+  const avatarUrl = config.agent_avatar_url;
 
   return (
-    <div 
-      className="min-h-screen p-4"
-      style={{ backgroundColor: brandColors.secondary }}
-    >
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-3xl" style={{ color: brandColors.primary }}>
-              {agent?.name || 'Executive Assistant'}
-            </CardTitle>
-            {config.profile_description && (
-              <p className="text-muted-foreground mt-2">{config.profile_description}</p>
-            )}
-          </CardHeader>
-        </Card>
+    <>
+      {config.custom_css && (
+        <style dangerouslySetInnerHTML={{ __html: config.custom_css }} />
+      )}
+      <div 
+        className="min-h-screen p-4"
+        style={{ 
+          backgroundColor: customTheme.backgroundColor || brandColors.secondary,
+          color: customTheme.textColor,
+        }}
+      >
+        <div className="max-w-7xl mx-auto">
+          {/* Banner Image */}
+          {bannerUrl && (
+            <div 
+              className="mb-6 rounded-lg overflow-hidden"
+              style={{ borderRadius: customTheme.borderRadius }}
+            >
+              <img
+                src={bannerUrl}
+                alt="Profile Banner"
+                className="w-full h-48 object-cover"
+              />
+            </div>
+          )}
 
-        {/* Main Content */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-6">
-            {/* Calendar Section */}
-            {config.show_calendar && (
-              <Card>
+          {/* Header */}
+          <Card 
+            className="mb-6"
+            style={{ 
+              backgroundColor: customTheme.cardBackground,
+              borderColor: customTheme.borderColor,
+              borderRadius: customTheme.borderRadius,
+            }}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                {avatarUrl && (
+                  <img
+                    src={avatarUrl}
+                    alt={agent?.name || 'Assistant'}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                )}
+                <div>
+                  <CardTitle className="text-3xl" style={{ color: brandColors.primary }}>
+                    {agent?.name || 'Executive Assistant'}
+                  </CardTitle>
+                  {config.profile_description && (
+                    <p className="text-muted-foreground mt-2">{config.profile_description}</p>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Main Content */}
+          <div 
+            className="grid gap-6 lg:grid-cols-2"
+            style={{ gap: customTheme.sectionSpacing }}
+          >
+            <div 
+              className="space-y-6"
+              style={{ gap: customTheme.sectionSpacing }}
+            >
+              {/* Calendar Section */}
+              {config.show_calendar && (
+                <Card
+                  style={{ 
+                    backgroundColor: customTheme.cardBackground,
+                    borderColor: customTheme.borderColor,
+                    borderRadius: customTheme.borderRadius,
+                  }}
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarIcon className="h-5 w-5" style={{ color: brandColors.primary }} />
+                      Schedule a Meeting
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CalendarView 
+                      config={config}
+                      onTimeSlotSelect={(time) => {
+                        setSelectedTimeSlot(time);
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Suggested Venues Section */}
+              {config.show_suggested_venues && <SuggestedVenues config={config} />}
+            </div>
+
+            {/* Chatbot Section */}
+            {config.show_chatbot && agent && (
+              <Card 
+                className="lg:sticky lg:top-4 h-fit"
+                style={{ 
+                  backgroundColor: customTheme.cardBackground,
+                  borderColor: customTheme.borderColor,
+                  borderRadius: customTheme.borderRadius,
+                }}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5" style={{ color: brandColors.primary }} />
-                    Schedule a Meeting
+                    <MessageSquare className="h-5 w-5" style={{ color: brandColors.primary }} />
+                    Chat with {agent.name}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <CalendarView 
-                    config={config}
-                    onTimeSlotSelect={(time) => {
-                      setSelectedTimeSlot(time);
-                    }}
-                  />
+                <CardContent className="p-0">
+                  <div className="h-[500px]">
+                    <ChatInterface 
+                      agentName={agent.name}
+                      agentPersonality={agent.personality}
+                      config={config}
+                      onTimeSlotSelected={selectedTimeSlot}
+                      onScheduleMeeting={(meetingData) => {
+                        console.log('Meeting scheduled:', meetingData);
+                        setSelectedTimeSlot(null);
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )}
-
-            {/* Suggested Venues Section */}
-            <SuggestedVenues config={config} />
           </div>
-
-          {/* Chatbot Section */}
-          {config.show_chatbot && agent && (
-            <Card className="lg:sticky lg:top-4 h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" style={{ color: brandColors.primary }} />
-                  Chat with {agent.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="h-[500px]">
-                  <ChatInterface 
-                    agentName={agent.name}
-                    agentPersonality={agent.personality}
-                    config={config}
-                    onTimeSlotSelected={selectedTimeSlot}
-                    onScheduleMeeting={(meetingData) => {
-                      console.log('Meeting scheduled:', meetingData);
-                      setSelectedTimeSlot(null);
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

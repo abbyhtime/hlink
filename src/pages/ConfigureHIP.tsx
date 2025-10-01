@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Calendar as CalendarIcon, MessageSquare, Settings, MapPin, Video } from 'lucide-react';
+import { Loader2, Save, Calendar as CalendarIcon, MessageSquare, Settings, MapPin, Video, Palette } from 'lucide-react';
+import { ImageUploadField } from '@/components/ImageUploadField';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,6 +49,21 @@ const ConfigureHIP = () => {
     // Preferences
     preferred_meeting_types: ['in-person', 'virtual'],
     virtual_platforms: ['zoom', 'teams', 'meet'],
+    // Theme customization
+    custom_theme: {
+      backgroundColor: 'hsl(var(--background))',
+      cardBackground: 'hsl(var(--card))',
+      primaryColor: 'hsl(var(--primary))',
+      secondaryColor: 'hsl(var(--secondary))',
+      accentColor: 'hsl(var(--accent))',
+      textColor: 'hsl(var(--foreground))',
+      borderColor: 'hsl(var(--border))',
+      borderRadius: '0.5rem',
+      sectionSpacing: '2rem',
+    },
+    banner_image_url: '',
+    agent_avatar_url: '',
+    custom_css: '',
   });
 
   useEffect(() => {
@@ -92,6 +108,10 @@ const ConfigureHIP = () => {
         const isStringArray = (arr: any): arr is string[] => {
           return Array.isArray(arr) && arr.every(item => typeof item === 'string');
         };
+
+        const customTheme = typeof data.custom_theme === 'object' && data.custom_theme !== null
+          ? data.custom_theme as any
+          : config.custom_theme;
           
         setConfig({
           is_public: data.is_public,
@@ -112,6 +132,10 @@ const ConfigureHIP = () => {
           enable_calendar_connection_flow: data.enable_calendar_connection_flow ?? true,
           preferred_meeting_types: isStringArray(data.preferred_meeting_types) ? data.preferred_meeting_types : ['in-person', 'virtual'],
           virtual_platforms: isStringArray(data.virtual_platforms) ? data.virtual_platforms : ['zoom', 'teams', 'meet'],
+          custom_theme: customTheme,
+          banner_image_url: data.banner_image_url || '',
+          agent_avatar_url: data.agent_avatar_url || '',
+          custom_css: data.custom_css || '',
         });
       }
     } catch (error: any) {
@@ -413,6 +437,156 @@ const ConfigureHIP = () => {
                       brand_colors: { ...config.brand_colors, secondary: e.target.value }
                     })}
                   />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Visual Customization */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Visual Customization
+              </CardTitle>
+              <CardDescription>Upload images and customize your page theme</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Banner Image Upload */}
+              <ImageUploadField
+                label="Banner Image"
+                description="Upload a banner image for your HIP page (recommended: 1200x300px)"
+                bucket="hip-banners"
+                currentImageUrl={config.banner_image_url}
+                onImageUploaded={(url) => setConfig({ ...config, banner_image_url: url })}
+                onImageRemoved={() => setConfig({ ...config, banner_image_url: '' })}
+              />
+
+              {/* Agent Avatar Upload */}
+              <ImageUploadField
+                label="Agent Avatar"
+                description="Upload a profile picture for your assistant (recommended: 400x400px)"
+                bucket="hip-avatars"
+                currentImageUrl={config.agent_avatar_url}
+                onImageUploaded={(url) => setConfig({ ...config, agent_avatar_url: url })}
+                onImageRemoved={() => setConfig({ ...config, agent_avatar_url: '' })}
+              />
+
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-4">Theme Colors</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bg-color">Background Color</Label>
+                    <Input
+                      id="bg-color"
+                      type="color"
+                      value={config.custom_theme.backgroundColor.includes('var') ? '#1a1a1a' : config.custom_theme.backgroundColor}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        custom_theme: { ...config.custom_theme, backgroundColor: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-bg-color">Card Background</Label>
+                    <Input
+                      id="card-bg-color"
+                      type="color"
+                      value={config.custom_theme.cardBackground.includes('var') ? '#2a2a2a' : config.custom_theme.cardBackground}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        custom_theme: { ...config.custom_theme, cardBackground: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="text-color">Text Color</Label>
+                    <Input
+                      id="text-color"
+                      type="color"
+                      value={config.custom_theme.textColor.includes('var') ? '#ffffff' : config.custom_theme.textColor}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        custom_theme: { ...config.custom_theme, textColor: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="border-color">Border Color</Label>
+                    <Input
+                      id="border-color"
+                      type="color"
+                      value={config.custom_theme.borderColor.includes('var') ? '#3a3a3a' : config.custom_theme.borderColor}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        custom_theme: { ...config.custom_theme, borderColor: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-4">Layout Settings</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="border-radius">Border Radius</Label>
+                    <Select
+                      value={config.custom_theme.borderRadius}
+                      onValueChange={(value) => setConfig({
+                        ...config,
+                        custom_theme: { ...config.custom_theme, borderRadius: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">None (0px)</SelectItem>
+                        <SelectItem value="0.25rem">Small (4px)</SelectItem>
+                        <SelectItem value="0.5rem">Medium (8px)</SelectItem>
+                        <SelectItem value="0.75rem">Large (12px)</SelectItem>
+                        <SelectItem value="1rem">Extra Large (16px)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="section-spacing">Section Spacing</Label>
+                    <Select
+                      value={config.custom_theme.sectionSpacing}
+                      onValueChange={(value) => setConfig({
+                        ...config,
+                        custom_theme: { ...config.custom_theme, sectionSpacing: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1rem">Compact</SelectItem>
+                        <SelectItem value="1.5rem">Comfortable</SelectItem>
+                        <SelectItem value="2rem">Spacious</SelectItem>
+                        <SelectItem value="3rem">Airy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor="custom-css">Custom CSS (Advanced)</Label>
+                  <Textarea
+                    id="custom-css"
+                    placeholder=".custom-class { color: red; }"
+                    value={config.custom_css}
+                    onChange={(e) => setConfig({ ...config, custom_css: e.target.value })}
+                    rows={5}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Add custom CSS to further customize your page appearance
+                  </p>
                 </div>
               </div>
             </CardContent>

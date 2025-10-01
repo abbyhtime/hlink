@@ -24,11 +24,20 @@ const SuggestedVenues = ({ config }: SuggestedVenuesProps) => {
     return null;
   }
 
+  const brandColors = config.brand_colors || { primary: '#479E7D', secondary: '#2A2A2A' };
+  const customTheme = config.custom_theme || {};
+
   return (
-    <Card>
+    <Card
+      style={{ 
+        backgroundColor: customTheme.cardBackground,
+        borderColor: customTheme.borderColor,
+        borderRadius: customTheme.borderRadius,
+      }}
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
+          <MapPin className="h-5 w-5" style={{ color: brandColors.primary }} />
           Suggested Venues
         </CardTitle>
       </CardHeader>
@@ -44,6 +53,10 @@ const SuggestedVenues = ({ config }: SuggestedVenuesProps) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block p-3 border rounded-lg hover:bg-accent transition-colors"
+                  style={{ 
+                    borderColor: customTheme.borderColor,
+                    borderRadius: customTheme.borderRadius,
+                  }}
                 >
                   <p className="font-medium">{venue.name}</p>
                   <p className="text-sm text-muted-foreground">{venue.address}</p>
@@ -66,6 +79,10 @@ const SuggestedVenues = ({ config }: SuggestedVenuesProps) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 p-3 border rounded-lg hover:bg-accent transition-colors"
+                    style={{ 
+                      borderColor: customTheme.borderColor,
+                      borderRadius: customTheme.borderRadius,
+                    }}
                   >
                     <Icon className="h-4 w-4" />
                     <span className="font-medium">{platform.name}</span>
